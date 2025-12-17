@@ -1,0 +1,24 @@
+[gd_scene load_steps=2 format=3 uid="uid://dn3ean0iwwscj"]
+
+[ext_resource type="Script" uid="uid://b6nraga0k0hq0" path="res://scripts/world.gd" id="1_3kvxc"]
+
+[node name="World" type="Node3D"]
+script = ExtResource("1_3kvxc")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+
+[node name="Xuan" type="Sprite3D" parent="."]
+
+[node name="Player" type="Sprite3D" parent="."]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="ErrorPopupContainer" type="VBoxContainer" parent="CanvasLayer"]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="SystemTerminal" type="Panel" parent="CanvasLayer"]
+offset_right = 40.0
+offset_bottom = 40.0
