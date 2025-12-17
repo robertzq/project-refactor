@@ -1,14 +1,21 @@
 extends Node
 
+func _ready():
+	# 测试能否调用全局管理器
+	print("Main Scene Loaded.")
+	
+	# 模拟：等待2秒后开始游戏
+	await get_tree().create_timer(2.0).timeout
+	GameManager.change_state(GameManager.GameState.PLAYING)
 
 # 挂在 World 节点上的脚本
 
 func _on_xuan_speak(text):
 	if text == "你直接转行吧":
 		trigger_awakening_event()
-	else:
+	#else:
 		# 普通的压制：屏幕弹出红色报错
-		spawn_error_popup("RuntimeError: Career path access denied.")
+		#spawn_error_popup("RuntimeError: Career path access denied.")
 
 func trigger_awakening_event():
 	# 1. 世界静止

@@ -1,9 +1,9 @@
 [gd_scene load_steps=2 format=3 uid="uid://dn3ean0iwwscj"]
 
-[ext_resource type="Script" uid="uid://b6nraga0k0hq0" path="res://scripts/world.gd" id="1_3kvxc"]
+[ext_resource type="Script" uid="uid://b6nraga0k0hq0" path="res://_Scripts/world.gd" id="1_1opub"]
 
 [node name="World" type="Node3D"]
-script = ExtResource("1_3kvxc")
+script = ExtResource("1_1opub")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 
