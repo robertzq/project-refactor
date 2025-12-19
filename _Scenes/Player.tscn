@@ -1,9 +1,16 @@
-[gd_scene load_steps=6 format=3 uid="uid://d3hvkomi6qf3v"]
+[gd_scene load_steps=8 format=3 uid="uid://d3hvkomi6qf3v"]
 
-[ext_resource type="Texture2D" uid="uid://bxsl0mqx3tq8k" path="res://_Assets/Walk.png" id="1_l4qae"]
+[ext_resource type="Script" uid="uid://ddtw3thd0ujy5" path="res://_Scenes/player.gd" id="1_k40lu"]
+[ext_resource type="Texture2D" uid="uid://cbp5ddspqr2t" path="res://_Assets/Idle.png" id="1_l4qae"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_k40lu"]
+radius = 0.19580078
+height = 0.9067383
 
 [sub_resource type="Animation" id="Animation_k40lu"]
 resource_name = "idle"
+length = 0.6
+loop_mode = 1
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
@@ -11,10 +18,10 @@ tracks/0/path = NodePath("Sprite3D:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
+"times": PackedFloat32Array(0, 0.099842936, 0.20172349, 0.2995288, 0.40140936, 0.5012523),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
 "update": 1,
-"values": [0]
+"values": [0, 1, 2, 3, 4, 5]
 }
 
 [sub_resource type="Animation" id="Animation_yaur6"]
@@ -41,10 +48,10 @@ tracks/0/path = NodePath("Sprite3D:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
+"times": PackedFloat32Array(0, 0.099842936, 0.19968587, 0.30767927, 0.40344697, 0.49310187, 0.59702003, 0.6989006, 0.80078113, 0.9067369),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 1,
-"values": [1]
+"values": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_wured"]
@@ -55,12 +62,11 @@ _data = {
 }
 
 [node name="Player" type="CharacterBody3D"]
-
-[node name="Sprite3D" type="Sprite3D" parent="."]
-texture = ExtResource("1_l4qae")
-hframes = 10
+script = ExtResource("1_k40lu")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2854004, 0)
+shape = SubResource("CapsuleShape3D_k40lu")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 
@@ -68,3 +74,7 @@ hframes = 10
 libraries = {
 &"": SubResource("AnimationLibrary_wured")
 }
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+texture = ExtResource("1_l4qae")
+hframes = 6
