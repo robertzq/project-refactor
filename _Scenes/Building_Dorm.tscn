@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://drny7bgdvsesv"]
+
+[ext_resource type="Script" uid="uid://c282euk16xcud" path="res://_Scripts/building_dorm.gd" id="1_nqvn5"]
+[ext_resource type="PackedScene" uid="uid://demlsxcu2jlfb" path="res://_Assets/kaykit_city_builder_bits/Assets/gltf/building_C.gltf" id="1_tpmw1"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5wan0"]
+size = Vector3(0.6547241, 1.0332031, 0.6948242)
+
+[node name="Node3D" type="StaticBody3D"]
+script = ExtResource("1_nqvn5")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0.48036897, 1.6568384, 0.5221435)
+shape = SubResource("BoxShape3D_5wan0")
+
+[node name="building_C2" parent="." instance=ExtResource("1_tpmw1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.49632418, 1.1920929e-07, 0.5684488)
+
+[editable path="building_C2"]

@@ -11,10 +11,11 @@ config_version=5
 [application]
 
 config/name="project-refactor"
-run/main_scene="uid://dn3ean0iwwscj"
+run/main_scene="uid://dxc4kb3dx6kg5"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
 GameManager="*res://_Scripts/Managers/GameManager.gd"
+Global="*res://_Autoload/Global.gd"

@@ -1,11 +1,26 @@
 [gd_scene load_steps=8 format=3 uid="uid://d3hvkomi6qf3v"]
 
-[ext_resource type="Script" uid="uid://ddtw3thd0ujy5" path="res://_Scenes/player.gd" id="1_k40lu"]
+[ext_resource type="Script" uid="uid://ddtw3thd0ujy5" path="res://player.gd" id="1_k40lu"]
 [ext_resource type="Texture2D" uid="uid://cbp5ddspqr2t" path="res://_Assets/Idle.png" id="1_l4qae"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_k40lu"]
 radius = 0.19580078
 height = 0.9067383
+
+[sub_resource type="Animation" id="Animation_yaur6"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite3D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
 
 [sub_resource type="Animation" id="Animation_k40lu"]
 resource_name = "idle"
@@ -22,21 +37,6 @@ tracks/0/keys = {
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 3, 4, 5]
-}
-
-[sub_resource type="Animation" id="Animation_yaur6"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Sprite3D:frame")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [0]
 }
 
 [sub_resource type="Animation" id="Animation_l4qae"]
@@ -76,5 +76,11 @@ libraries = {
 }
 
 [node name="Sprite3D" type="Sprite3D" parent="."]
+billboard = 2
 texture = ExtResource("1_l4qae")
 hframes = 6
+
+[node name="RayCast3D" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.13250136, 0)
+target_position = Vector3(2, 0, 0)
+collide_with_areas = true

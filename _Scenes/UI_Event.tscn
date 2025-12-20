@@ -1,0 +1,44 @@
+[gd_scene load_steps=2 format=3 uid="uid://dr5mmjbw58np1"]
+
+[ext_resource type="Script" uid="uid://dr4y46jbb2yns" path="res://_Scripts/ui_event.gd" id="1_eex4q"]
+
+[node name="UI_Layer" type="CanvasLayer"]
+process_mode = 3
+script = ExtResource("1_eex4q")
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="ColorRect" parent="Control"]
+layout_mode = 0
+offset_right = 268.0
+offset_bottom = 75.0
+color = Color(0.0035191667, 0.0035191681, 0.0035191672, 1)
+
+[node name="Panel" type="Panel" parent="Control"]
+layout_mode = 0
+offset_right = 270.0
+offset_bottom = 76.0
+
+[node name="Label" type="Label" parent="Control/Panel"]
+layout_mode = 0
+offset_top = -1.0
+offset_right = 40.0
+offset_bottom = 22.0
+text = "111"
+
+[node name="Button" type="Button" parent="Control/Panel"]
+process_mode = 3
+layout_mode = 0
+offset_left = 88.0
+offset_top = 41.0
+offset_right = 138.0
+offset_bottom = 72.0
+text = "Close"
+
+[connection signal="pressed" from="Control/Panel/Button" to="." method="_on_button_pressed"]
