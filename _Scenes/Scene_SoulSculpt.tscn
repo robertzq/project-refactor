@@ -1,0 +1,156 @@
+[gd_scene load_steps=6 format=3 uid="uid://chi75c5ggirj7"]
+
+[ext_resource type="Script" uid="uid://6b0tfex0e5ec" path="res://_Scripts/scene_soul_sculpt.gd" id="1_m08go"]
+
+[sub_resource type="Environment" id="Environment_cusrc"]
+background_mode = 3
+glow_enabled = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_m08go"]
+emission_enabled = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_m08go"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n3mfm"]
+emission_enabled = true
+
+[node name="Scene_SoulSculpt" type="Node3D"]
+script = ExtResource("1_m08go")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_cusrc")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldEnvironment"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_m08go")
+mesh = SubResource("SphereMesh_m08go")
+surface_material_override/0 = SubResource("StandardMaterial3D_n3mfm")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Control" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -792.0
+offset_right = -792.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="Panel" parent="CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 2
+scale = Vector2(2, 2)
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/Control/Panel"]
+layout_mode = 0
+offset_right = 394.0
+offset_bottom = 360.0
+
+[node name="Label" type="Label" parent="CanvasLayer/Control/Panel/VBox"]
+layout_mode = 2
+text = "重构你的灵魂"
+
+[node name="OptionButton" type="OptionButton" parent="CanvasLayer/Control/Panel/VBox"]
+layout_mode = 2
+item_count = 1
+popup/item_0/id = 0
+
+[node name="SecurityRow" type="HBoxContainer" parent="CanvasLayer/Control/Panel/VBox"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="CanvasLayer/Control/Panel/VBox/SecurityRow"]
+layout_mode = 2
+text = "security"
+horizontal_alignment = 2
+
+[node name="SecuritySlider" type="HSlider" parent="CanvasLayer/Control/Panel/VBox/SecurityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ValueLabel" type="Label" parent="CanvasLayer/Control/Panel/VBox/SecurityRow"]
+layout_mode = 2
+text = "0"
+
+[node name="EntropyRow" type="HBoxContainer" parent="CanvasLayer/Control/Panel/VBox"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="CanvasLayer/Control/Panel/VBox/EntropyRow"]
+layout_mode = 2
+text = "entropy"
+horizontal_alignment = 2
+
+[node name="EntropySlider" type="HSlider" parent="CanvasLayer/Control/Panel/VBox/EntropyRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ValueLabel" type="Label" parent="CanvasLayer/Control/Panel/VBox/EntropyRow"]
+layout_mode = 2
+text = "0"
+
+[node name="PrideRow" type="HBoxContainer" parent="CanvasLayer/Control/Panel/VBox"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="CanvasLayer/Control/Panel/VBox/PrideRow"]
+layout_mode = 2
+text = "pride"
+horizontal_alignment = 2
+
+[node name="PrideSlider" type="HSlider" parent="CanvasLayer/Control/Panel/VBox/PrideRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ValueLabel" type="Label" parent="CanvasLayer/Control/Panel/VBox/PrideRow"]
+layout_mode = 2
+text = "0"
+
+[node name="FocusRow" type="HBoxContainer" parent="CanvasLayer/Control/Panel/VBox"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="CanvasLayer/Control/Panel/VBox/FocusRow"]
+layout_mode = 2
+text = "focus"
+
+[node name="FocusSlider" type="HSlider" parent="CanvasLayer/Control/Panel/VBox/FocusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ValueLabel" type="Label" parent="CanvasLayer/Control/Panel/VBox/FocusRow"]
+layout_mode = 2
+text = "0"
+
+[node name="PointsLabel" type="Label" parent="CanvasLayer/Control/Panel/VBox"]
+layout_mode = 2
+
+[node name="RemainPointsLabel" type="Label" parent="CanvasLayer/Control/Panel/VBox"]
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="CanvasLayer/Control/Panel/VBox"]
+layout_mode = 2
+text = "0"
+
+[node name="StartButton" type="Button" parent="CanvasLayer/Control/Panel/VBox"]
+layout_mode = 2
+text = "开始人生"
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.5)
+
+[connection signal="value_changed" from="CanvasLayer/Control/Panel/VBox/SecurityRow/SecuritySlider" to="." method="_on_slider_changed"]
+[connection signal="value_changed" from="CanvasLayer/Control/Panel/VBox/EntropyRow/EntropySlider" to="." method="_on_slider_changed"]
+[connection signal="value_changed" from="CanvasLayer/Control/Panel/VBox/PrideRow/PrideSlider" to="." method="_on_slider_changed"]
+[connection signal="value_changed" from="CanvasLayer/Control/Panel/VBox/FocusRow/FocusSlider" to="." method="_on_slider_changed"]
+[connection signal="pressed" from="CanvasLayer/Control/Panel/VBox/StartButton" to="." method="_on_start_button_pressed"]

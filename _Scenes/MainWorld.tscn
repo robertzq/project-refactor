@@ -1,14 +1,18 @@
-[gd_scene load_steps=7 format=3 uid="uid://dxc4kb3dx6kg5"]
+[gd_scene load_steps=8 format=3 uid="uid://dxc4kb3dx6kg5"]
 
 [ext_resource type="MeshLibrary" uid="uid://ie640u0xdaco" path="res://my_tiles.tres" id="1_0wt7h"]
 [ext_resource type="Script" uid="uid://jwuidsopn8jt" path="res://_Scripts/main_world.gd" id="1_pt4xt"]
 [ext_resource type="PackedScene" uid="uid://d3hvkomi6qf3v" path="res://_Scenes/Player.tscn" id="2_b8oha"]
+[ext_resource type="PackedScene" uid="uid://lu14ckl0jr3s" path="res://_Scenes/UI_LifePath.tscn" id="2_ugwwi"]
 [ext_resource type="PackedScene" uid="uid://tv4cm1lv1vpr" path="res://_Scenes/Building_Lib.tscn" id="3_e2qk1"]
 [ext_resource type="PackedScene" uid="uid://drny7bgdvsesv" path="res://_Scenes/Building_Dorm.tscn" id="4_b4a7i"]
 [ext_resource type="PackedScene" uid="uid://dr5mmjbw58np1" path="res://_Scenes/UI_Event.tscn" id="6_ugwwi"]
 
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_pt4xt")
+
+[node name="CanvasLayer" parent="." instance=ExtResource("2_ugwwi")]
+process_mode = 3
 
 [node name="GridMap" type="GridMap" parent="."]
 mesh_library = ExtResource("1_0wt7h")

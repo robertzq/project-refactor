@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="project-refactor"
-run/main_scene="uid://dxc4kb3dx6kg5"
+run/main_scene="uid://chi75c5ggirj7"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
