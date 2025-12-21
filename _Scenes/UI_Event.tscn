@@ -32,19 +32,15 @@ offset_right = 40.0
 offset_bottom = 48.0
 text = "111"
 
-[node name="Button" type="Button" parent="Control/Panel"]
-process_mode = 3
+[node name="OptionContainer" type="VBoxContainer" parent="Control/Panel"]
 layout_mode = 0
-offset_left = 217.0
-offset_top = 64.0
-offset_right = 267.0
-offset_bottom = 95.0
-text = "关闭"
+offset_top = 61.0
+offset_right = 279.0
+offset_bottom = 89.0
 
 [node name="StatsPanel" type="HBoxContainer" parent="."]
-offset_top = 1.0
 offset_right = 174.0
-offset_bottom = 31.0
+offset_bottom = 30.0
 
 [node name="MoneyLabel" type="Label" parent="StatsPanel"]
 layout_mode = 2
@@ -53,5 +49,3 @@ text = "Money: $0"
 [node name="AnxietyLabel" type="Label" parent="StatsPanel"]
 layout_mode = 2
 text = "Anxiety: 0%"
-
-[connection signal="pressed" from="Control/Panel/Button" to="." method="_on_button_pressed"]
