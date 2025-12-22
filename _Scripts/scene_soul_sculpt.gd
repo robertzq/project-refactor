@@ -32,7 +32,7 @@ func _ready():
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	
 	# ============================================================
-	# 🎨 UI 布局微调 (针对下拉框太丑的问题)
+	# 🎨 UI 布局微调
 	# ============================================================
 	
 	# 获取主要容器
@@ -43,33 +43,39 @@ func _ready():
 	if hbox_top and left_panel and right_panel:
 		hbox_top.set_anchors_preset(Control.PRESET_FULL_RECT)
 		
-		# 左右各占 50%
+		# --- 左右分屏 ---
 		left_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		left_panel.size_flags_stretch_ratio = 1.0 
+		
 		right_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		right_panel.size_flags_stretch_ratio = 1.0
 		right_panel.add_theme_constant_override("separation", 30)
+		
+		# [关键] 防止左侧面板被挤压为0
+		left_panel.custom_minimum_size.x = 400 
+		right_panel.custom_minimum_size.x = 400
+
+		# --- [核心修复] 解决字竖着排的问题 ---
+		if comment_label:
+			# 1. 开启智能换行
+			comment_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			# 2. 撑满横向空间
+			comment_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL 
+			# 3. [这一行救命] 给它一个最小宽度，防止被挤成一条线
+			comment_label.custom_minimum_size.x = 300 
+			# 4. 居中对齐 (可选，看你喜好)
+			comment_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	# ============================================================
-	# 🔧 下拉框专项整形 (The OptionButton Fix)
+	# 🔧 下拉框专项整形
 	# ============================================================
 	
-	# 1. 字体放大：让字配得上这么大的框
-	# 设置按钮本身的文字大小
 	origin_option.add_theme_font_size_override("font_size", 32) 
-	
-	# 设置点开后"弹出列表(Popup)"的文字大小 (这一步很关键，否则点开还是小字)
 	var popup = origin_option.get_popup()
 	popup.add_theme_font_size_override("font_size", 32)
 	
-	# 2. 高度控制：不要无限拉伸，给个舒适的高度即可
-	# 之前是 EXPAND_FILL 会导致它占满剩余空间，现在改为只占必要空间，但给个最小高度
-	origin_option.size_flags_vertical = Control.SIZE_SHRINK_CENTER # 或者 SIZE_FILL
-	origin_option.custom_minimum_size.y = 80 # 80像素高，够大够爽
-	
-	# 给列表里的每一项加点垂直间距，防止误触
-	# (这是 Godot 的一个小技巧，通过主题覆盖)
-	# popup.add_theme_constant_override("v_separation", 10) 
+	origin_option.size_flags_vertical = Control.SIZE_SHRINK_CENTER 
+	origin_option.custom_minimum_size.y = 80 
 
 	# ============================================================
 	# 🎚️ 滑块整形
@@ -81,10 +87,10 @@ func _ready():
 			s.custom_minimum_size.y = 50 
 	
 	# ============================================================
-	# ⚙️ 逻辑初始化 (不变)
+	# ⚙️ 逻辑初始化
 	# ============================================================
 
-	# 智能查找 ValueLabel (增加字体大小)
+	# 智能查找 ValueLabel
 	for key in sliders:
 		var s = sliders[key]
 		if s == null: continue
@@ -96,7 +102,6 @@ func _ready():
 					break
 		if lbl: 
 			value_labels[key] = lbl
-			# 顺便把数值 Label 的字也放大，保持一致
 			lbl.add_theme_font_size_override("font_size", 32)
 
 	# TTS 初始化
@@ -109,7 +114,7 @@ func _ready():
 				break
 		if current_voice_id == "": current_voice_id = voices[0]["id"]
 
-	# 下拉菜单内容填充
+	# 下拉菜单内容
 	origin_option.clear()
 	origin_option.add_item("--- 选择出身 (Archetype) ---", 0)
 	var idx = 1
@@ -135,8 +140,6 @@ func _ready():
 	
 	await get_tree().create_timer(0.5).timeout
 	speak_truth("So... you wish to reconstruct a soul?", "那么……你想重构一个灵魂？")
-
-
 # --- 核心交互 ---
 func _on_slider_changed(value_discarded, key):
 	# 调试打印：如果你拖动滑块看不到这行字，说明信号没连上
