@@ -1,12 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://lu14ckl0jr3s"]
-
-[ext_resource type="Script" uid="uid://cjycr0ihfhca4" path="res://_Scripts/UI_LifePath.gd" id="1_yfh54"]
+[gd_scene load_steps=2 format=3 uid="uid://lu14ckl0jr3s"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_wyyp5"]
 font_size = 48
 
 [node name="CanvasLayer" type="CanvasLayer"]
-script = ExtResource("1_yfh54")
 
 [node name="Control" type="Control" parent="."]
 layout_mode = 3
