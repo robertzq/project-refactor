@@ -177,4 +177,4 @@ func finish_questionnaire():
 	print("Strategy: ", Global.recovery_strategy)
 	
 	# 转场代码放在这
-	# get_tree().change_scene_to_file("res://Scenes/MainDashboard.tscn")
+	get_tree().change_scene_to_file("res://_Scenes/MainWorld.tscn")

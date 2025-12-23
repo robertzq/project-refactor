@@ -1,17 +1,3 @@
 [remap]
 
-importer="csv_translation"
-type="Translation"
-uid="uid://mc6qpky1hcvn"
-
-[deps]
-
-files=["res://Data/events_chapter1.title.translation", "res://Data/events_chapter1.desc.translation", "res://Data/events_chapter1.type.translation", "res://Data/events_chapter1.base.translation", "res://Data/events_chapter1.condition.translation", "res://Data/events_chapter1.condition.translation", "res://Data/events_chapter1.options.translation"]
-
-source_file="res://Data/events_chapter1.csv"
-dest_files=["res://Data/events_chapter1.title.translation", "res://Data/events_chapter1.desc.translation", "res://Data/events_chapter1.type.translation", "res://Data/events_chapter1.base.translation", "res://Data/events_chapter1.condition.translation", "res://Data/events_chapter1.condition.translation", "res://Data/events_chapter1.options.translation"]
-
-[params]
-
-compress=true
-delimiter=0
+importer="keep"

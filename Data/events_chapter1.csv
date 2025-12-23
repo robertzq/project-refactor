@@ -1,6 +1,11 @@
-id,title,desc,type,base_stress,condition_type,condition_val,options
-evt_scholarship,公开的秘密,"辅导员让你上台进行“困难演讲”，全班都在看着你。",EGO,35,MAX_FIN,3,"A:大声说出困境(拿钱但丢人)|B:放弃(保住面子)"
-evt_bitcoin,食堂的闲聊,"你听到学长在讨论比特币，说这东西未来能买房。",VISION,0,MIN_ENTROPY,4,"A:记下来回去查(解锁节点)|B:觉得是传销(错过)"
-evt_roommate_dad,无意的暴击,"室友爸爸请吃饭，随口说：毕业没地儿去就来叔叔公司。",GEN,40,NONE,0,"A:谢谢叔叔(无感)|B:默默破防(高敏感暴击)"
-evt_laptop_break,电脑主板烧了,"写论文写到一半，电脑突然黑屏，那是你唯一的生产力工具。",MONEY,50,NONE,0,"A:修(花大钱)|B:硬抗(不可能)"
-evt_deadline,赶Deadline,"今晚必须交稿，咖啡已经喝了三杯，心脏狂跳。",GEN,25,NONE,0,"A:死磕(耗血)|B:摸鱼(放弃)"
+id,title,desc,type,category,options,effect_a,effect_b
+EVT_100,无电脑困境,旧电脑又蓝屏了。看着室友丝滑地编译代码，你感到生产力的巨大差距。,dorm_enter,STATUS,忍受卡顿|去网吧写,stress:5:STATUS,money:-20;stress:-10:GEN
+EVT_101,生产力工具,那台¥5000的 MacBook Air 在网页上闪闪发光。买了它没钱吃饭，不买像个原始人。,dorm_enter,MONEY,咬牙买下|凑合用旧的,money:-5000;pride:2;stress:-50:GEN,stress:10:MONEY
+EVT_105,富哥的生日宴,富二代邀请全班去KTV。你摸了摸口袋里的生活费，那是你一个月的饭钱。,dorm_enter,MONEY,去凑热闹|找借口不去,money:-300;pride:1,pride:-2;stress:20:EGO
+EVT_106,破碎的自尊,第一次穿正装面试，发现别人的西装是定制的，而你的袖口有个线头。,dorm_enter,EGO,藏起袖口|不管了自信点,stress:30:EGO,pride:1;stress:10:GEN
+EVT_108,机房避难所,深夜的机房只有风扇声。在这里代码不会背叛你，Bug 终将被解决。,lib_enter,STUDY,通宵写代码|回宿舍睡觉,stress:-15:STUDY;entropy:-1,stress:5:GEN
+EVT_109,深夜炒面,路边摊的油烟味。老板娘多给你加了一个蛋，说：“大学生不容易啊。”,cafe_enter,GENERAL,大口吃完|在那发呆,stress:-10:GEN,stress:0:GEN
+EVT_201,奖学金的秘密,听说 Xuan 拿到了贫困生助学金，但他脚上那双鞋好像是新款 AJ。,lib_enter,EGO,公开质疑|装作不知道,pride:1;stress:15:EGO,entropy:1
+EVT_202,Wula的诱惑,Wula 给你介绍兼职：“帮忙刷几个单，动动手指就赚200。”,dorm_enter,GENERAL,这钱我赚了|感觉是陷阱,money:200;trait:投机者;work:true,pride:1
+EVT_204,死锁的二叉树,数据结构作业太难了。看着屏幕上的报错，感觉像个跳不出的循环。,lib_enter,WORK,死磕到底|抄室友作业,stress:25:WORK,stress:5:GEN
+EVT_302,父亲的电话,父亲声音支吾：“最近手头有点紧，下个月生活费能不能晚几天……”,dorm_enter,EGO,安慰父亲|表示不满,stress:20:EGO,stress:10:EGO;pride:-1

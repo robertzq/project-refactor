@@ -1,149 +1,179 @@
 extends Node
 
-# ========================================================
-# 1. 核心属性定义 (The Soul) v3.2
-# ========================================================
+# ==============================================================================
+# 1. 核心属性库 (The Internal Engine)
+# ==============================================================================
 
-# 基础属性 (0-10)
-var fin_security: int = 0      # 家境 (底气): 决定胆量，抵消金钱压力
-var pride: int = 0             # 自尊 (骨气): 决定胆量，增加面子压力
-var sensitivity: float = 1.0   # 敏感 (痛觉): 全局伤害倍率 (0.8 - 1.5)
-var entropy: int = 0           # 熵值 (视野): 决定地图节点可见性
-var base_exec: float = 1.0     # 执行力 (手): 基础效率系数
+# [基础资源]
+var money: int = 0          # 资金 (影响生存)
+var project_progress: float = 0.0 # 项目进度 (影响通关)
 
-# 动态状态
-var current_anxiety: float = 0.0
-var max_anxiety_limit: float = 100.0 # 由 base_exec * 80 决定
-var current_ap: int = 100
-var money: int = 0
+# [四大维度的核心参数]
+var fin_security: int = 5   # 家境 (P_fin): 提供金钱抗性
+var pride: int = 5          # 自尊 (P_pride): 增加 EGO 伤害
+var entropy: int = 5        # 熵/视野: 影响工作难度
+var sensitivity: float = 1.0 # 敏感度 (P_sens): 全局伤害乘区
+var base_exec: float = 1.0  # 执行力基数 (E_base): 影响工作效率
 
-# 特质与Buff
-var traits: Array = []         # 例如 ["背水一战", "退路"]
-var active_curses: Array = []  # 例如 ["安逸诅咒"]
-var recovery_strategy: String = "" # 回血策略: "Extrovert", "Introvert", "Explorer"
+# [状态记录]
+var current_anxiety: float = 0.0 # 当前焦虑值
+var traits: Array = []           # 特质列表 (如 "背水一战", "卷王")
+var recovery_strategy: String = "Explorer" # <--- 【已补回】回血策略 (Extrovert/Introvert/Explorer)
 
-# 游戏进程
-var current_day: int = 1
-var current_time_slot: int = 0 # 0:早晨, 1:下午, 2:晚上
+# ==============================================================================
+# 2. 游戏初始化 (Game Flow)
+# ==============================================================================
 
-# ---辅助函数：方便添加特质---
-func add_trait(trait_name: String):
-	if trait_name not in traits:
-		traits.append(trait_name)
-		print("获得特质: ", trait_name)
-# ========================================================
-# 2. 初始化逻辑 (Initialization)
-# ========================================================
-
+# 初始化角色模板 (在游戏开始或重开时调用)
 func init_character(archetype: String):
-	# 重置状态
-	current_anxiety = 0
-	traits.clear()
+	print(">>> 正在初始化角色模板: ", archetype)
 	
+	# 1. 重置所有动态状态
+	current_anxiety = 0
+	project_progress = 0
+	traits = []
+	recovery_strategy = "Explorer" # 默认值，会在火车问卷中被修改
+	
+	# 2. 根据出身设定初始数值
 	match archetype:
 		"STRIVER": # 小镇做题家
 			fin_security = 2
-			pride = 6
-			sensitivity = 1.2
+			pride = 7
 			base_exec = 1.2
-			entropy = 3
-			traits.append("背水一战")
-		"SCHOLAR": # 落魄书香
-			fin_security = 4
-			pride = 9
-			sensitivity = 1.4
-			base_exec = 0.9
-			entropy = 7
-		"HUSTLER": # 野蛮生长
-			fin_security = 3
-			pride = 1
-			sensitivity = 0.9
-			base_exec = 1.0
-			entropy = 5
-		"HEIR": # 温室花朵
-			fin_security = 9
-			pride = 5
-			sensitivity = 1.0
+			sensitivity = 1.2
+			money = 800
+			add_trait("卷王")
+			
+		"SLACKER": # 摆烂富二代
+			fin_security = 8
+			pride = 4
 			base_exec = 0.8
-			entropy = 4
-			traits.append("退路")
-	
-	# 计算初始阈值
-	max_anxiety_limit = base_exec * 80.0
-	print("Character Initialized: ", archetype, " | Limit: ", max_anxiety_limit)
+			sensitivity = 0.9
+			money = 5000
+			add_trait("松弛感")
+			
+		_: # 默认 (Default)
+			fin_security = 5
+			pride = 5
+			base_exec = 1.0
+			sensitivity = 1.0
+			money = 2000
 
-# ========================================================
-# 3. 核心公式计算器 (The Calculator)
-# ========================================================
+# ==============================================================================
+# 3. 核心数学公式 (The Soul Algorithm v3.2)
+# ==============================================================================
 
-# 计算胆量 (公式 3.1)
+# [3.1] 获取胆量 (Boldness)
 func get_boldness() -> float:
 	return (fin_security * 0.4) + (pride * 0.6)
 
-# 计算并应用压力 (公式 3.2)
-# event_type: "MONEY", "EGO", "GEN"
-# is_working: 是否处于打工状态 (用于触发穷人避难所)
-func apply_stress(base_stress: float, event_type: String, is_working: bool = false) -> Dictionary:
-	var omega: float = base_stress
-	var log_str: String = ""
+# [3.2] 获取焦虑上限 (Breakdown Limit)
+func get_max_anxiety_limit() -> float:
+	return 80.0 * base_exec
+
+# [3.3] 获取当前工作效率 (Efficiency)
+func get_efficiency() -> Dictionary:
+	var final_eff = base_exec
+	var curse = "无"
 	
-	# Step 1: 原始压力
-	match event_type:
+	# 简单的诅咒判定示例
+	if fin_security > 7 and current_anxiety < 30:
+		final_eff *= 0.7
+		curse = "安逸诅咒"
+	elif get_boldness() < 4.0:
+		final_eff *= 0.8
+		curse = "胆怯诅咒"
+		
+	return {"value": final_eff, "curse": curse}
+
+# [3.4] 压力结算核心公式
+# base_val: 基础数值
+# type: 类型 (MONEY, EGO, GEN, STUDY, WORK)
+# is_working: 是否处于兼职/工作状态 (影响避难所判定)
+func apply_stress(base_val: float, type: String, is_working: bool = false) -> Dictionary:
+	
+	# --- A. 回血逻辑 (负数) ---
+	if base_val < 0:
+		# 可以在这里加入 recovery_strategy 的判断逻辑
+		# 比如: 如果是 Extrovert 且 type=="SOCIAL"，回血加倍
+		var heal_amount = base_val
+		
+		# 简单示例: 高敏感的人回血也快
+		heal_amount *= sensitivity
+		
+		current_anxiety += heal_amount
+		if current_anxiety < 0: current_anxiety = 0
+		print(">> [Global] 治愈: %.1f | 当前焦虑: %.1f" % [heal_amount, current_anxiety])
+		return {"damage": heal_amount, "current_anxiety": current_anxiety}
+
+	# --- B. 扣血逻辑 (正数) ---
+	
+	# Step 1: 计算原始压力 (Omega)
+	var omega = base_val
+	var log_reason = ""
+	
+	match type:
 		"MONEY":
-			var reduction = fin_security * 2.0
-			omega = base_stress - reduction
-			log_str = "MoneyEvent: Base %s - Fin*2(%s)" % [base_stress, reduction]
-		"EGO":
-			var amp = pride * 0.5
-			omega = base_stress + amp
-			log_str = "EgoEvent: Base %s + Pride*0.5(%s)" % [base_stress, amp]
-		_:
-			log_str = "GenEvent: Base %s" % base_stress
+			# 没钱时伤害巨高：基础值 - (家境 * 2.0)
+			# 例如：家境2，减免4；家境8，减免16
+			omega = base_val - (fin_security * 2.0)
+			log_reason = "家境修正"
 			
-	# Step 2: 避难所修正 (v3.2 修正值为 8)
-	var refuge_bonus: float = 0.0
+		"EGO":
+			# 自尊越高伤害越高：基础值 + (自尊 * 0.5)
+			omega = base_val + (pride * 0.5)
+			log_reason = "自尊修正"
+			
+		_:
+			omega = base_val
+			log_reason = "通用"
+
+	# Step 2: 避难所修正 (穷人打工保护机制)
 	if is_working and fin_security < 3:
-		refuge_bonus = 8.0
-		log_str += " - Refuge(8)"
+		omega -= 8.0
+		log_reason += "+避难所"
 	
-	# Step 3: 最终结算
-	var raw_val = max(0.0, omega - refuge_bonus)
-	var final_delta = raw_val * sensitivity
+	if omega < 0: omega = 0 # 伤害不能为负
+
+	# Step 3: 全局敏感度放大
+	var final_damage = omega * sensitivity
 	
-	# 应用数值
-	current_anxiety += final_delta
-	log_str += " * Sens(%s) = %s" % [sensitivity, final_delta]
+	# 应用结果
+	current_anxiety += final_damage
 	
-	# 检查崩溃
-	var is_breakdown = current_anxiety >= max_anxiety_limit
-	
+	# 打印战斗日志
+	print("---------------------------------------")
+	print("🩸 [Global] 压力结算 (%s)" % type)
+	print("   公式: (基础%.0f -> 修正%.1f [%s]) x 敏感%.1f = 最终%.1f" % [base_val, omega, log_reason, sensitivity, final_damage])
+	print("   当前焦虑: %.1f / %.1f" % [current_anxiety, get_max_anxiety_limit()])
+	print("---------------------------------------")
+
 	return {
-		"damage": final_delta,
+		"damage": final_damage,
 		"current_anxiety": current_anxiety,
-		"breakdown": is_breakdown,
-		"log": log_str
+		"is_breakdown": current_anxiety >= get_max_anxiety_limit()
 	}
 
-# 获取当前工作/学习效率 (公式 3.3)
-func get_efficiency() -> float:
-	var boldness = get_boldness()
-	var mu: float = 1.0
-	active_curses.clear()
+# ==============================================================================
+# 4. 辅助工具
+# ==============================================================================
+
+func add_trait(t_name):
+	if t_name not in traits:
+		traits.append(t_name)
+		print(">> [Global] 获得特质: ", t_name)
+
+# 建筑交互 -> 事件查找器桥梁
+func get_random_event(building_id: String) -> Dictionary:
+	var trigger_type = "GEN"
+	match building_id:
+		"DORM": trigger_type = "dorm_enter"
+		"LIB":  trigger_type = "lib_enter"
+		"CAFE": trigger_type = "cafe_enter"
 	
-	# 判定诅咒
-	# 1. 安逸诅咒
-	if fin_security > 7 and current_anxiety < 30:
-		mu *= 0.7
-		active_curses.append("安逸")
-	
-	# 2. 胆怯诅咒
-	if boldness < 4.0:
-		mu *= 0.8
-		active_curses.append("胆怯")
-		
-	# 3. 卷王 (特质加成)
-	if current_anxiety > 80 and "背水一战" in traits:
-		mu *= 1.2
-		active_curses.append("卷王")
-		
-	return base_exec * mu
+	if has_node("/root/EventManager"):
+		var evt = get_node("/root/EventManager").check_for_event(trigger_type)
+		if evt != null: return evt
+
+	# 兜底空事件
+	return {"id": "none", "title": "无事发生", "desc": "周围很安静。", "options": "离开", "effect_a": ""}
