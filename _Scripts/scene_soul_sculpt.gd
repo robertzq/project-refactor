@@ -15,7 +15,9 @@ var value_labels = {}
 @onready var remain_points_label = $HBoxTop/VBox/RemainPointsLabel
 @onready var origin_option = $HBoxTop/VBox/OptionButton
 @onready var comment_label = $HBoxTop/LeftPanel/VBoxContainer/CommentLabel
-@onready var truth_shape = $HBoxTop/LeftPanel/VBoxContainer/TruthShape
+
+
+@onready var audio_player= $AudioPlayer
 
 const MAX_POINTS = 20
 
@@ -140,6 +142,8 @@ func _ready():
 	
 	await get_tree().create_timer(0.5).timeout
 	speak_truth("So... you wish to reconstruct a soul?", "那么……你想重构一个灵魂？")
+	playTTS("res://_Assets/Audio/constructSoul.mp3")
+	
 # --- 核心交互 ---
 func _on_slider_changed(value_discarded, key):
 	# 调试打印：如果你拖动滑块看不到这行字，说明信号没连上
@@ -147,12 +151,6 @@ func _on_slider_changed(value_discarded, key):
 	
 	update_ui()
 	
-	# 视觉反馈
-	if truth_shape:
-		var tween = create_tween()
-		var target_scale = 1.0 + (sliders[key].value * 0.05)
-		tween.tween_property(truth_shape, "scale", Vector2.ONE * target_scale, 0.2)
-
 	trigger_truth_commentary(key, sliders[key].value)
 
 # --- 界面刷新 ---
@@ -203,44 +201,66 @@ func trigger_truth_commentary(key: String, value: float):
 # --- TTS 执行 ---
 # update_text_anim: 是否要在这里重置字幕动画 (默认 true)
 func speak_truth(text_en: String, text_cn: String, update_text_anim: bool = true):
-	DisplayServer.tts_stop()
+	#DisplayServer.tts_stop()
 	
 	if comment_label and update_text_anim:
 		comment_label.text = text_cn
 		comment_label.visible_ratio = 0.0
 		var tween = create_tween()
 		tween.tween_property(comment_label, "visible_ratio", 1.0, 1.5)
-	
-	if not current_voice_id.is_empty():
-		# 参数: text, voice_id, volume, pitch, rate
-		# Pitch 0.6 = 低沉巨人音
-		# Rate 0.75 = 缓慢压迫感
-		DisplayServer.tts_speak(text_en, current_voice_id, 60, 0.6, 0.75)
+		
 
 # --- 文案库 (保持不变) ---
 func get_commentary(type: String, val: float) -> Dictionary:
 	var v = int(val)
 	match type:
 		"security":
-			if v <= 2: return {"en": "Survival mode. The dirt tastes bitter.", "cn": "生存模式。土的味道很苦吧？"}
-			if v <= 4: return {"en": "Just enough to starve slowly.", "cn": "这点钱，刚够你慢慢饿死。"}
-			if v <= 6: return {"en": "Mediocrity. Safe, but boring.", "cn": "平庸。安全，但也无聊。"}
-			if v <= 8: return {"en": "Comfortable. You forgot how to run.", "cn": "很舒适。你已经忘了怎么奔跑。"}
+			if v <= 2: 
+				playTTS("res://_Assets/Audio/s2.mp3")
+				return {"en": "Survival mode. The dirt tastes bitter.", "cn": "生存模式。土的味道很苦吧？"}
+			if v <= 4: 
+				playTTS("res://_Assets/Audio/s4.mp3")
+				return {"en": "Just enough to starve slowly.", "cn": "这点钱，刚够你慢慢饿死。"}
+			if v <= 6: 
+				playTTS("res://_Assets/Audio/s6.mp3")
+				return {"en": "Mediocrity. Safe, but boring.", "cn": "平庸。安全，但也无聊。"}
+			if v <= 8: 
+				playTTS("res://_Assets/Audio/s8.mp3")
+				return {"en": "Comfortable. You forgot how to run.", "cn": "很舒适。你已经忘了怎么奔跑。"}
+			playTTS("res://_Assets/Audio/selse.mp3")
 			return {"en": "The golden parachute. Don't choke.", "cn": "金色的降落伞。别被噎死了。"}
 		"pride":
-			if v <= 2: return {"en": "A doormat. Everyone wipes their feet.", "cn": "一块地垫。谁都能踩两脚。"}
-			if v <= 4: return {"en": "Weak knees. You want to kneel.", "cn": "膝盖很软。你本能地想跪下。"}
-			if v <= 6: return {"en": "A healthy ego. How common.", "cn": "健康的自尊。多么普通。"}
-			if v <= 8: return {"en": "Nose high. You will drown in rain.", "cn": "鼻孔朝天。下雨时会被淹死的。"}
+			if v <= 2: 
+				playTTS("res://_Assets/Audio/p2.mp3")
+				return {"en": "A doormat. Everyone wipes their feet.", "cn": "一块地垫。谁都能踩两脚。"}
+			if v <= 4: 
+				playTTS("res://_Assets/Audio/p4.mp3")
+				return {"en": "Weak knees. You want to kneel.", "cn": "膝盖很软。你本能地想跪下。"}
+			if v <= 6: 
+				playTTS("res://_Assets/Audio/p6.mp3")
+				return {"en": "A healthy ego. How common.", "cn": "健康的自尊。多么普通。"}
+			if v <= 8: 
+				playTTS("res://_Assets/Audio/p8.mp3")
+				return {"en": "Nose high. You will drown in rain.", "cn": "鼻孔朝天。下雨时会被淹死的。"}
+			playTTS("res://_Assets/Audio/pelse.mp3")
 			return {"en": "Stiff neck. Perfect for hanging.", "cn": "脖子真硬。很适合挂在绞刑架上。"}
 		"entropy":
-			if v <= 2: return {"en": "Blind. Blissfully ignorant.", "cn": "瞎子。无知是福。"}
-			if v <= 6: return {"en": "You see what they want you to see.", "cn": "你只看得到别人想让你看的。"}
+			if v <= 2: 
+				playTTS("res://_Assets/Audio/e2.mp3")
+				return {"en": "Blind. Blissfully ignorant.", "cn": "瞎子。无知是福。"}
+			if v <= 6: 
+				playTTS("res://_Assets/Audio/e6.mp3")
+				return {"en": "You see what they want you to see.", "cn": "你只看得到别人想让你看的。"}
+			playTTS("res://_Assets/Audio/eelse.mp3")
 			return {"en": "You see the chaos. Can you handle it?", "cn": "你看见了混沌。但你能承受吗？"}
 		"sensitivity":
-			if v <= 3: return {"en": "Stone heart. Nothing hurts.", "cn": "铁石心肠。什么都伤不了你。"}
-			if v >= 8: return {"en": "Exposed nerves. Breathing hurts.", "cn": "神经裸露。连呼吸都会痛。"}
-			
+			if v <= 3: 
+				playTTS("res://_Assets/Audio/sen3.mp3")
+				return {"en": "Stone heart. Nothing hurts.", "cn": "铁石心肠。什么都伤不了你。"}
+			if v >= 8: 
+				playTTS("res://_Assets/Audio/sen8.mp3")
+				return {"en": "Exposed nerves. Breathing hurts.", "cn": "神经裸露。连呼吸都会痛。"}
+	playTTS("res://_Assets/Audio/intreseChoice.mp3")		
 	return {"en": "Interesting choice...", "cn": "有趣的选择……"}
 
 # --- 职业选择 ---
@@ -249,7 +269,7 @@ func _on_origin_selected(index):
 	var origin_name = origin_option.get_item_text(index)
 	# 选职业时，只播放一句总结性的悲剧，不触发滑块语音，防止吵闹
 	speak_truth("Ah, " + origin_name + ". A classic tragedy.", "啊，" + origin_name + "。一出经典的悲剧。")
-	
+	playTTS("res://_Assets/Audio/ahTragedy.mp3")
 	# 设置数值 (这里不会触发 value_changed 信号)
 	match origin_name:
 		"小镇做题家":
@@ -281,6 +301,7 @@ func _on_start_button_pressed():
 	for key in sliders: total += sliders[key].value
 	if total > MAX_POINTS:
 		speak_truth("Greedy soul. Too much.", "贪婪的灵魂。你索取得太多了。")
+		playTTS("res://_Assets/Audio/greedySoul.mp3")
 		var tween = create_tween()
 		tween.tween_property(remain_points_label, "position:x", remain_points_label.position.x + 10, 0.05).set_trans(Tween.TRANS_SINE)
 		tween.tween_property(remain_points_label, "position:x", remain_points_label.position.x - 10, 0.05).set_trans(Tween.TRANS_SINE)
@@ -294,3 +315,10 @@ func _on_start_button_pressed():
 	
 	print(">>> 灵魂注入完成。")
 	get_tree().change_scene_to_file("res://_Scenes/MainWorld.tscn")
+	
+func playTTS(filepath: String):
+	audio_player.stop()
+	var stream = load(filepath)
+	audio_player.stream = stream
+	audio_player.pitch_scale = randf_range(0.98, 1.02)
+	audio_player.play()
