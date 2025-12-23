@@ -7,9 +7,13 @@ func _ready():
 	print("GameManager initialized. Ready to Refactor!")
 	
 	# 1. 初始化角色
-	# 这个现在可以工作了，因为 Global 里有 init_character 了
-	Global.init_character("STRIVER")
-	
+	# --- 修复核心：只有在没钱（说明没经过问卷）的时候才初始化 ---
+	if Global.money == 0: 
+		print("⚠️ 检测到数据为空，执行默认初始化 (Debug模式)")
+		Global.init_character("STRIVER")
+	else:
+		print("✅ 检测到已有数据，继承问卷结果 (Security: %d)" % Global.fin_security)
+		
 	print("角色初始化完成。")
 	print("当前资金: ", Global.money)
 	print("当前焦虑: ", Global.current_anxiety)

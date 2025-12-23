@@ -18,16 +18,19 @@ var questions = [
 				"text": "沉重 (全家积蓄)",
 				# delta_stats: 表示在这个属性上 增加/减少 多少
 				"delta_stats": {"fin_security": -1},
+				"set_global": {"money": 2000},
 				# add_trait: 表示获得什么特质
 				"add_trait": "背水一战"
 			},
 			{
 				"text": "踏实 (够用就好)",
+				"set_global": {"money": 5000},
 				# 什么都不写，就是无变化
 			},
 			{
 				"text": "轻松 (零花钱)",
 				"delta_stats": {"fin_security": 1},
+				"set_global": {"money": 20000},
 				"add_trait": "退路"
 			}
 		]
@@ -118,12 +121,12 @@ func load_question():
 		options_container.add_child(btn)
 
 # --- 核心修改：在这里解析数据并执行 ---
+# TrainScene.gd
+
 func _on_option_selected(opt_data):
-	# --- 新增：防止重复点击 ---
-	# 1. 遍历容器，把所有按钮设为不可用
+	# --- 防止重复点击 ---
 	for btn in options_container.get_children():
 		btn.disabled = true
-	# -----------------------
 
 	# 播放音效
 	if sfx_player: sfx_player.play()
@@ -153,21 +156,9 @@ func _on_option_selected(opt_data):
 	# 进入下一题
 	current_index += 1
 	load_question()
-
-	# 2. 处理直接赋值 (set_global)
-	if opt_data.has("set_global"):
-		var setters = opt_data["set_global"]
-		for key in setters:
-			Global.set(key, setters[key])
-			print("属性设定: ", key, " = ", setters[key])
-
-	# 3. 处理特质添加 (add_trait)
-	if opt_data.has("add_trait"):
-		Global.add_trait(opt_data["add_trait"])
-
-	# 进入下一题
-	current_index += 1
-	load_question()
+	
+	# 🛑 注意：原来这里下面有一大段重复的 duplicate code，请务必删除！
+	# (不要再写一遍 if opt_data.has("set_global")... 和 current_index += 1 了)
 
 func finish_questionnaire():
 	print(">>> 问卷结束 <<<")

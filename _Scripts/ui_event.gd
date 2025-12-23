@@ -157,7 +157,9 @@ func parse_and_execute(command_str: String):
 				# 我们暂时认为 work:true 只是一个标记，或者你可以把它整合进 stress 指令里
 				# 比如 stress:20:WORK:TRUE。
 				# 目前简单起见，仅打印
-				print("   -> 触发工作状态 (逻辑待完善)")
+				var state = parts[1] == "true"
+				Global.is_employed = state
+				print("   -> 工作状态更新: ", Global.is_employed)
 
 			_:
 				print("⚠️ 未知指令: ", action)

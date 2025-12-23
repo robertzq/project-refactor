@@ -12,6 +12,7 @@ const MOVE_TIME = 0.2  # 移动一格需要多少秒（越小越快）
 signal hit_building(building_id)
 # --- 状态变量 ---
 var is_moving = false  # 是否正在移动中（防止连按）
+var can_trigger_event = true # <--- 新增开关
 
 func _physics_process(delta):
 	# 如果正在移动，就不接受新指令，直接返回
@@ -57,8 +58,7 @@ func try_move(direction: Vector3):
 			print("撞到了建筑！ID是: ", collider.building_id)
 			# TODO: 这里稍后会呼叫 UI 弹窗函数
 			emit_signal("hit_building", collider.building_id)
-			var event_data = Global.get_random_event(collider.building_id)
-			event_ui.show_event(event_data)
+			
 			
 		# 3. 既然撞到了，就停止移动
 		return

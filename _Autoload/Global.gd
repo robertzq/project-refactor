@@ -19,7 +19,7 @@ var base_exec: float = 1.0  # 执行力基数 (E_base): 影响工作效率
 var current_anxiety: float = 0.0 # 当前焦虑值
 var traits: Array = []           # 特质列表 (如 "背水一战", "卷王")
 var recovery_strategy: String = "Explorer" # <--- 【已补回】回血策略 (Extrovert/Introvert/Explorer)
-
+var is_employed: bool = false
 # ==============================================================================
 # 2. 游戏初始化 (Game Flow)
 # ==============================================================================
@@ -123,13 +123,21 @@ func apply_stress(base_val: float, type: String, is_working: bool = false) -> Di
 			# 自尊越高伤害越高：基础值 + (自尊 * 0.5)
 			omega = base_val + (pride * 0.5)
 			log_reason = "自尊修正"
-			
+		
+		"WORK", "STUDY":
+			# 熵越高(迷茫)，做同样的事越累
+			# 公式: 基础值 * (0.8 + 熵 * 0.05)
+			# 例: 熵5 -> 1.05倍; 熵10 -> 1.3倍; 熵0 -> 0.8倍
+			var entropy_mult = 0.8 + (entropy * 0.05)
+			omega = base_val * entropy_mult
+			log_reason = "认知修正(熵%d)" % entropy
+				
 		_:
 			omega = base_val
 			log_reason = "通用"
 
 	# Step 2: 避难所修正 (穷人打工保护机制)
-	if is_working and fin_security < 3:
+	if is_employed and fin_security < 3:
 		omega -= 8.0
 		log_reason += "+避难所"
 	
