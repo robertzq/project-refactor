@@ -160,6 +160,12 @@ func parse_and_execute(command_str: String):
 				var state = parts[1] == "true"
 				Global.is_employed = state
 				print("   -> 工作状态更新: ", Global.is_employed)
+				
+			"sed":
+				# 语法: sed:1
+				var val = int(parts[1])
+				# 调用 Global 写好的逻辑，它会自动处理阈值和信号
+				Global.add_sedimentation(val)
 
 			_:
 				print("⚠️ 未知指令: ", action)

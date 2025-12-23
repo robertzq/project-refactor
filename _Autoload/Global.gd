@@ -20,10 +20,22 @@ var current_anxiety: float = 0.0 # 当前焦虑值
 var traits: Array = []           # 特质列表 (如 "背水一战", "卷王")
 var recovery_strategy: String = "Explorer" # <--- 【已补回】回血策略 (Extrovert/Introvert/Explorer)
 var is_employed: bool = false
+
+var sedimentation: int = 0   # 沉淀值
+# 1. 定义信号 (通知 UI 刷新)
+signal vision_improved(new_entropy, message) # 当眼界提升时发出信号
+
+# 2. 定义阈值
+const SEDIMENTATION_THRESHOLD = 5 # 每积攒 5 点沉淀，提升 1 点眼界
+# --- ✅ 新增：人生路径数据库 (从 JSON 加载) ---
+var life_path_db: Dictionary = {}
 # ==============================================================================
 # 2. 游戏初始化 (Game Flow)
 # ==============================================================================
-
+func _ready():
+	# 游戏启动时，加载 JSON 数据
+	load_life_paths_from_json("res://Data/life_paths.json")
+	
 # 初始化角色模板 (在游戏开始或重开时调用)
 func init_character(archetype: String):
 	print(">>> 正在初始化角色模板: ", archetype)
@@ -185,3 +197,68 @@ func get_random_event(building_id: String) -> Dictionary:
 
 	# 兜底空事件
 	return {"id": "none", "title": "无事发生", "desc": "周围很安静。", "options": "离开", "effect_a": ""}
+
+# --- 核心：增加沉淀并检查顿悟 ---
+# --- 1. 沉淀值逻辑 ---
+func add_sedimentation(amount: int):
+	var old_level = int(sedimentation / SEDIMENTATION_THRESHOLD)
+	
+	sedimentation += amount
+	print(">> [Global] 沉淀增加: %d (当前: %d)" % [amount, sedimentation])
+	
+	var new_level = int(sedimentation / SEDIMENTATION_THRESHOLD)
+	if new_level > old_level:
+		var gain = new_level - old_level
+		entropy += gain # 提升眼界
+		var msg = "灵光一闪！眼界提升了 +%d" % gain
+		print("✨ " + msg)
+		emit_signal("vision_improved", entropy, msg)
+
+# --- 2. JSON 数据加载逻辑 ---
+func load_life_paths_from_json(path: String):
+	if not FileAccess.file_exists(path):
+		printerr("❌ 找不到人生路径配置文件: ", path)
+		return
+		
+	var file = FileAccess.open(path, FileAccess.READ)
+	var content = file.get_as_text()
+	var json = JSON.new()
+	var error = json.parse(content)
+	
+	if error == OK:
+		life_path_db = json.data
+		print("✅ 人生路径树加载完成，共 ", life_path_db.size(), " 条路径。")
+	else:
+		printerr("❌ JSON 解析失败: ", json.get_error_message())
+		
+# --- 顿悟逻辑 (Epiphany) ---
+func trigger_epiphany(level_gain: int):
+	# 提升眼界 (Entropy)
+	# 设定里: Entropy 代表"视野半径"。数值越大，能看到的节点越远。
+	entropy += level_gain 
+	
+	var msg = "灵光一闪！经过长时间的沉淀，你的眼界提升了！(视野 +%d)" % level_gain
+	print("✨✨✨ " + msg + " ✨✨✨")
+	
+	# 发出信号，让 UI_LifePath (迷雾树) 知道该解锁新层级了
+	emit_signal("vision_improved", entropy, msg)
+	
+	# 播放一个全局提示音效 (可选)
+	# if has_node("/root/MainWorld/SFX_LevelUp"): ...
+# --- 3. 核心：迷雾检测逻辑 (0:不可见, 1:模糊, 2:清晰) ---
+func check_path_visibility(path_id: String) -> int:
+	if not life_path_db.has(path_id): return 0
+	
+	var path_data = life_path_db[path_id]
+	var req_entropy = path_data.get("req_entropy", 0) # 需求眼界
+	
+	# 逻辑设定：
+	# 1. 如果眼界 >= 需求 -> 清晰 (2)
+	if entropy >= req_entropy:
+		return 2
+	# 2. 如果眼界只差一点点 (比如差2点以内) -> 模糊 (1)
+	elif entropy >= req_entropy - 2:
+		return 1
+	# 3. 差距太大 -> 隐形 (0)
+	else:
+		return 0

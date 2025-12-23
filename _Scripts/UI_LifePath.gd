@@ -1,16 +1,18 @@
 extends CanvasLayer
 
-@onready var path_list = $Control/ScrollContainer/PathList # 路径要对
+@onready var path_list = $Control/ScrollContainer/PathList 
 @onready var root_control = $Control
 
 func _ready():
-	# 默认隐藏
 	visible = false
 	root_control.visible = false
+	
+	# --- ✅ 关键修改：监听 Global 的眼界提升信号 ---
+	# 这样当你在事件里获得了 sed -> 触发 entropy 提升 -> 这里的 UI 就会自动刷新
+	Global.vision_improved.connect(_on_vision_improved)
 
 func _input(event):
-	# 监听 TAB 键开关界面
-	if event.is_action_pressed("ui_focus_next"): # TAB 键默认映射
+	if event.is_action_pressed("ui_focus_next"): # TAB
 		toggle_ui()
 
 func toggle_ui():
@@ -19,52 +21,57 @@ func toggle_ui():
 	
 	if visible:
 		refresh_tree()
-		# 暂停游戏，给玩家思考时间
 		get_tree().paused = true
 	else:
 		get_tree().paused = false
+
+# 当眼界提升时，刷新列表并（可选）弹出提示
+func _on_vision_improved(new_val, msg):
+	# 如果 UI 正开着，就刷新一下
+	if visible:
+		refresh_tree()
+	# 这里其实可以加一个 HUD 的 Toast 弹窗提示玩家“发现新路径”
 
 func refresh_tree():
 	# 1. 清空旧按钮
 	for child in path_list.get_children():
 		child.queue_free()
 	
-	# 2. 遍历 Global 里的配置，生成按钮
-	for id in Global.life_path_db:
+	# 2. 遍历 Global 的配置 (现在是从 JSON 加载的了)
+	# 为了好看，我们可以按 req_entropy 排序 (JSON 是无序的)
+	var keys = Global.life_path_db.keys()
+	
+	# 3. 生成按钮
+	for id in keys:
 		var config = Global.life_path_db[id]
+		# 调用 Global 写好的迷雾检测逻辑
 		var visibility = Global.check_path_visibility(id)
 		
-		# === 核心：迷雾渲染逻辑 ===
-		
-		# 情况 A: 隐形 (Invisible) -> 根本不生成按钮
-		# 比如穷人看不见“创业”
+		# 情况 A: 隐形 (Invisible)
 		if visibility == 0:
 			continue 
 			
 		var btn = Button.new()
-		# 稍微设置一下最小高度，防止字挤在一起
-		btn.custom_minimum_size = Vector2(0, 60)
+		btn.custom_minimum_size = Vector2(0, 80) # 高一点，因为有描述
+		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT # 左对齐比较好看
 		
-		# 情况 B: 模糊 (Blurred) -> 能看见，但不知道是啥
-		# 比如知道有“出国”这回事，但条件不够
+		# 情况 B: 模糊 (Blurred)
 		if visibility == 1:
-			btn.text = "??? (未知的道路)"
+			btn.text = " [ 迷雾重重 ]\n (???) "
 			btn.disabled = true
-			# 给他一点提示（诛心时刻）
-			btn.tooltip_text = "你的[认知]或[安全感]不足以看清这条路。\n去图书馆读书，或者多存点钱吧。"
+			btn.tooltip_text = "你的[眼界(Entropy)]不足。\n多去经历一些[深度沉淀]的事件吧。"
+			btn.modulate = Color(0.4, 0.4, 0.4, 0.5) # 灰色半透明
 			
-			# 视觉上弄成灰色
-			btn.modulate = Color(0.5, 0.5, 0.5, 0.8)
-			
-		# 情况 C: 清晰 (Clear) -> 可以点击规划
+		# 情况 C: 清晰 (Clear)
 		elif visibility == 2:
-			btn.text = config["name"] + "\n" + config["desc"]
+			btn.text = " 【" + config["name"] + "】\n  " + config["desc"]
 			btn.disabled = false
-			# 绑定点击事件 (以后做月度规划用)
+			btn.modulate = Color(1, 1, 1, 1)
 			btn.pressed.connect(_on_path_selected.bind(id))
 			
 		path_list.add_child(btn)
 
 func _on_path_selected(path_id):
 	print("玩家选择了路径: ", path_id)
-	# 这里以后接月度规划系统
+	# MVP 阶段：这里可以仅仅打印
+	# 后续：弹出确认框 "确定要致力于这条道路吗？"

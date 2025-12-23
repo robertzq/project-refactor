@@ -1,0 +1,32 @@
+{
+	"path_programmer": {
+		"name": "全栈工程师",
+		"desc": "掌握核心技术，成为赛博时代的建筑师。",
+		"req_entropy": 3
+	},
+	"path_indie_dev": {
+		"name": "独立开发者",
+		"desc": "不仅要有技术，还要有表达自我的勇气。",
+		"req_entropy": 6
+	},
+	"path_sales": {
+		"name": "金牌销售",
+		"desc": "看透人性的弱点，用话术换取财富。",
+		"req_entropy": 2
+	},
+	"path_scholar": {
+		"name": "学术深造",
+		"desc": "在象牙塔尖探索人类认知的边界。",
+		"req_entropy": 8
+	},
+	"path_crypto": {
+		"name": "Web3 投机者",
+		"desc": "在泡沫中冲浪，这是勇敢者的游戏。",
+		"req_entropy": 5
+	},
+	"path_home": {
+		"name": "回乡躺平",
+		"desc": "接受平凡，享受安宁。",
+		"req_entropy": 0
+	}
+}

@@ -6,6 +6,6 @@ EVT_106,破碎的自尊,第一次穿正装面试，发现别人的西装是定�
 EVT_108,机房避难所,深夜的机房只有风扇声。在这里代码不会背叛你，Bug 终将被解决。,lib_enter,STUDY,通宵写代码|回宿舍睡觉,stress:-15:STUDY;entropy:-1,stress:5:GEN
 EVT_109,深夜炒面,路边摊的油烟味。老板娘多给你加了一个蛋，说：“大学生不容易啊。”,cafe_enter,GENERAL,大口吃完|在那发呆,stress:-10:GEN,stress:0:GEN
 EVT_201,奖学金的秘密,听说 Xuan 拿到了贫困生助学金，但他脚上那双鞋好像是新款 AJ。,lib_enter,EGO,公开质疑|装作不知道,pride:1;stress:15:EGO,entropy:1
-EVT_202,Wula的诱惑,Wula 给你介绍兼职：“帮忙刷几个单，动动手指就赚200。”,dorm_enter,GENERAL,这钱我赚了|感觉是陷阱,money:200;trait:投机者;work:true,pride:1
-EVT_204,死锁的二叉树,数据结构作业太难了。看着屏幕上的报错，感觉像个跳不出的循环。,lib_enter,WORK,死磕到底|抄室友作业,stress:25:WORK,stress:5:GEN
+EVT_202,Wula的诱惑,Wula 给你介绍兼职：“帮忙刷几个单，动动手指就赚200。”,dorm_enter,WORK,这钱我赚了|感觉是陷阱,money:200;trait:投机者;work:true,pride:1;progress:5
+EVT_204,死锁的二叉树,数据结构作业太难了。看着屏幕上的报错，感觉像个跳不出的循环。,lib_enter,STUDY,死磕到底|抄室友作业,stress:25:STUDY,stress:5:GEN;progress:5
 EVT_302,父亲的电话,父亲声音支吾：“最近手头有点紧，下个月生活费能不能晚几天……”,dorm_enter,EGO,安慰父亲|表示不满,stress:20:EGO,stress:10:EGO;pride:-1
