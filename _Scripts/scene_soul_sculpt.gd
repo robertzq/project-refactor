@@ -291,7 +291,7 @@ func _on_start_button_pressed():
 	Global.sensitivity = 0.8 + (sliders["sensitivity"].value * 0.07) 
 	
 	print(">>> 灵魂注入完成。")
-	get_tree().change_scene_to_file("res://_Scenes/MainWorld.tscn")
+	get_tree().change_scene_to_file("res://_Scenes/TrainScene.tscn")
 	
 func playTTS(filepath: String):
 	audio_player.stop()

@@ -1,0 +1,31 @@
+[gd_scene load_steps=2 format=3 uid="uid://dxjinsocbscqd"]
+
+[ext_resource type="Script" uid="uid://dusn3ubgt5lnd" path="res://_Scripts/TrainScene.gd" id="1_ch7xk"]
+
+[node name="Root" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_ch7xk")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="BG_Sound" type="AudioStreamPlayer" parent="."]
+
+[node name="SFX" type="AudioStreamPlayer" parent="."]
+
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="QuestionTitle" type="Label" parent="Content"]
+layout_mode = 2
+
+[node name="QuestionDesc" type="RichTextLabel" parent="Content"]
+layout_mode = 2
+
+[node name="OptionsContainer" type="VBoxContainer" parent="Content"]
+layout_mode = 2

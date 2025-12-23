@@ -20,11 +20,17 @@ var money: int = 0
 # 特质与Buff
 var traits: Array = []         # 例如 ["背水一战", "退路"]
 var active_curses: Array = []  # 例如 ["安逸诅咒"]
+var recovery_strategy: String = "" # 回血策略: "Extrovert", "Introvert", "Explorer"
 
 # 游戏进程
 var current_day: int = 1
 var current_time_slot: int = 0 # 0:早晨, 1:下午, 2:晚上
 
+# ---辅助函数：方便添加特质---
+func add_trait(trait_name: String):
+	if trait_name not in traits:
+		traits.append(trait_name)
+		print("获得特质: ", trait_name)
 # ========================================================
 # 2. 初始化逻辑 (Initialization)
 # ========================================================
