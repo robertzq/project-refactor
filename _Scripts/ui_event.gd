@@ -105,6 +105,8 @@ func _on_choice_selected(index: int):
 	# 3. 关闭弹窗
 	panel_root.visible = false
 	get_tree().paused = false
+	
+
 
 # --- 通用指令解析器 (核心逻辑) ---
 func parse_and_execute(command_str: String):
@@ -114,7 +116,8 @@ func parse_and_execute(command_str: String):
 	
 	# 1. 按分号拆分多条指令 (例: "money:-300;pride:1")
 	var commands = command_str.split(";")
-	
+	var story_fragment = ""
+	var current_title = current_event.get("title", "未知事件")
 	for cmd in commands:
 		# 2. 按冒号拆分参数 (例: "stress:20:EGO")
 		var parts = cmd.split(":")
@@ -125,6 +128,9 @@ func parse_and_execute(command_str: String):
 				var val = int(parts[1])
 				Global.money += val # 确保 Global里有money变量
 				print("   -> 资金变动: ", val)
+				# 只记录大额变动，买瓶水这种小事不用记
+				if abs(val) >= 100:
+					Global.record_journal("MONEY", val, current_title)
 				
 			"pride":
 				var val = int(parts[1])
@@ -148,7 +154,13 @@ func parse_and_execute(command_str: String):
 				if parts.size() > 2: 
 					type = parts[2]
 				# 这里会调用我们在 Global 里写好的 v3.2 复杂公式
-				Global.apply_stress(val, type, false)
+				var result = Global.apply_stress(val, type, false)
+				var actual_damage = result.damage
+				# ★ 记录：如果伤害很高，要重点记录
+				if actual_damage > 0:
+					Global.record_journal("STRESS", actual_damage, current_title)
+				elif actual_damage < 0:
+					Global.record_journal("HEAL", actual_damage, current_title)
 				
 			"work":
 				# 特殊语法: work:true (标记这次事件属于工作性质，用于触发避难所计算)
@@ -166,9 +178,29 @@ func parse_and_execute(command_str: String):
 				var val = int(parts[1])
 				# 调用 Global 写好的逻辑，它会自动处理阈值和信号
 				Global.add_sedimentation(val)
-
+				# ★ 记录：这是最重要的心态变化
+				Global.record_journal("SED", val, current_title)
+			
+			"progress":
+				var val = float(parts[1])
+				# 核心：效率乘区！
+				var efficiency = Global.get_efficiency().value
+				var actual_gain = val * efficiency
+				Global.project_progress += actual_gain
+				print("   -> 项目进度: +%.1f (基础%s x 效率%.1f)" % [actual_gain, parts[1], efficiency])
+				Global.record_journal("PROGRESS", actual_gain, current_title)
+				# 记录故事：如果这真的是在干活
+				story_fragment = "在图书馆死磕项目，进度推进了 %.1f%%。" % actual_gain
 			_:
 				print("⚠️ 未知指令: ", action)
+				
+	# 循环结束后，把故事写入 Global
+	if story_fragment != "":
+		Global.log_story(story_fragment)
+	else:
+		# 如果没有特定的 progress 描述，可以用事件标题生成一个通用的
+		var evt_title = current_event.get("title", "某事")
+		Global.log_story("经历了事件：【%s】" % evt_title)
 # 封装调用 Global
 func apply_stress(val, type):
 	# 确保 Global 里有这个函数，不然会报错

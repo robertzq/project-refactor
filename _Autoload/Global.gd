@@ -8,6 +8,14 @@ extends Node
 var money: int = 0          # 资金 (影响生存)
 var project_progress: float = 0.0 # 项目进度 (影响通关)
 
+# [时间系统]
+var current_week: int = 1   # 当前周数 (1-2周为上半月，3-4周为下半月)
+var total_weeks: int = 24   # 假设玩半年 (24周)，或者一学期
+var current_cycle_log: Array = [] # 存储这半个月发生的所有事情（用于写周报）
+
+# [项目系统]
+const PROGRESS_GOAL = 100.0 # 目标
+
 # [四大维度的核心参数]
 var fin_security: int = 5   # 家境 (P_fin): 提供金钱抗性
 var pride: int = 5          # 自尊 (P_pride): 增加 EGO 伤害
@@ -29,6 +37,9 @@ signal vision_improved(new_entropy, message) # 当眼界提升时发出信号
 const SEDIMENTATION_THRESHOLD = 5 # 每积攒 5 点沉淀，提升 1 点眼界
 # --- ✅ 新增：人生路径数据库 (从 JSON 加载) ---
 var life_path_db: Dictionary = {}
+# [日记系统]
+# 存储结构: [{ "type": "WORK", "val": 25, "desc": "死磕二叉树" }, ...]
+var journal_logs: Array = []
 # ==============================================================================
 # 2. 游戏初始化 (Game Flow)
 # ==============================================================================
@@ -262,3 +273,35 @@ func check_path_visibility(path_id: String) -> int:
 	# 3. 差距太大 -> 隐形 (0)
 	else:
 		return 0
+		
+# Global.gd
+
+
+
+# --- 新增：记录故事的函数 ---
+func log_story(text: String):
+	current_cycle_log.append(text)
+	print(">> [Story] 记录: ", text)
+
+# --- 新增：推进时间 ---
+func advance_time():
+	current_week += 1
+	print(">> [Time] 进入第 %d 周" % current_week)
+	
+	# 检查是否到了半月结算点 (每2周一次，即第2, 4, 6...周结束时)
+	if current_week % 2 != 0: # 奇数周(第3周)刚开始，说明偶数周(第2周)刚结束
+		return true # 需要结算
+	return false
+	
+# --- 记录日记的接口 ---
+func record_journal(type: String, val: float, desc: String):
+	journal_logs.append({
+		"type": type,
+		"val": val,
+		"desc": desc
+	})
+	print(">> [Journal] 已记录: [%s] %s (%.1f)" % [type, desc, val])
+
+# --- 清空日记 (每半月调用) ---
+func clear_journal():
+	journal_logs.clear()
