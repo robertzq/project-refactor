@@ -106,15 +106,6 @@ func _ready():
 			value_labels[key] = lbl
 			lbl.add_theme_font_size_override("font_size", 32)
 
-	# TTS 初始化
-	var voices = DisplayServer.tts_get_voices()
-	if not voices.is_empty():
-		for v in voices:
-			if v.has("language") and v["language"].begins_with("en"):
-				current_voice_id = v["id"]
-				print(">> 选中英文神音: ", v["name"])
-				break
-		if current_voice_id == "": current_voice_id = voices[0]["id"]
 
 	# 下拉菜单内容
 	origin_option.clear()
@@ -175,25 +166,26 @@ func update_ui():
 # --- 说话逻辑 ---
 func trigger_truth_commentary(key: String, value: float):
 	var current_time = Time.get_ticks_msec() / 1000.0
-	var current_zone = int(value / 2.1) # 0-2.1 为第一档，2.1-4.2 为第二档...
+	var current_zone = int(value / 2.1)
 	
-	# 1. 实时刷新文字 (无视冷却，只要变了就刷)
-	var commentary = get_commentary(key, value)
+	# 获取数据（此时不播放声音）
+	var data = get_commentary(key, value)
+	
+	# 1. 字幕实时刷新逻辑
 	if comment_label:
-		# 只有当中文字幕发生变化时，才重新打印
-		if comment_label.text != commentary.cn:
-			comment_label.text = commentary.cn
+		if comment_label.text != data.cn:
+			comment_label.text = data.cn
 			comment_label.visible_ratio = 0.0
 			var tween = create_tween()
 			tween.tween_property(comment_label, "visible_ratio", 1.0, 0.5)
 
-	# 2. 语音播放 (必须跨越区间 OR 距离上次说话很久)
-	# 这里的 4.0 是“沉默保护”，如果神很久没说话了，即使你在同一个区间微调，它也会重新念一遍
+	# 2. 语音播放逻辑
 	if current_time - last_voice_time > voice_cooldown:
 		if current_zone != last_zones[key] or (current_time - last_voice_time > 4.0):
 			
-			# 播放声音
-			speak_truth(commentary.en, commentary.cn, false) # false 表示不重置字幕动画，防止打断上面
+			# 核心修改：在这里拿到路径，去播放
+			speak_truth(data.en, data.cn, false)
+			playTTS(data.audio) # <--- 把播放动作移到这里
 			
 			last_zones[key] = current_zone
 			last_voice_time = current_time
@@ -213,55 +205,40 @@ func speak_truth(text_en: String, text_cn: String, update_text_anim: bool = true
 # --- 文案库 (保持不变) ---
 func get_commentary(type: String, val: float) -> Dictionary:
 	var v = int(val)
+	# 默认返回值，防止漏网之鱼
+	var result = {
+		"en": "Interesting choice...", 
+		"cn": "有趣的选择……", 
+		"audio": "res://_Assets/Audio/intreseChoice.mp3"
+	}
+	
 	match type:
 		"security":
-			if v <= 2: 
-				playTTS("res://_Assets/Audio/s2.mp3")
-				return {"en": "Survival mode. The dirt tastes bitter.", "cn": "生存模式。土的味道很苦吧？"}
-			if v <= 4: 
-				playTTS("res://_Assets/Audio/s4.mp3")
-				return {"en": "Just enough to starve slowly.", "cn": "这点钱，刚够你慢慢饿死。"}
-			if v <= 6: 
-				playTTS("res://_Assets/Audio/s6.mp3")
-				return {"en": "Mediocrity. Safe, but boring.", "cn": "平庸。安全，但也无聊。"}
-			if v <= 8: 
-				playTTS("res://_Assets/Audio/s8.mp3")
-				return {"en": "Comfortable. You forgot how to run.", "cn": "很舒适。你已经忘了怎么奔跑。"}
-			playTTS("res://_Assets/Audio/selse.mp3")
-			return {"en": "The golden parachute. Don't choke.", "cn": "金色的降落伞。别被噎死了。"}
+			if v <= 2: result = {"en": "Survival mode...", "cn": "生存模式。土的味道很苦吧？", "audio": "res://_Assets/Audio/s2.mp3"}
+			elif v <= 4: result = {"en": "Just enough...", "cn": "这点钱，刚够你慢慢饿死。", "audio": "res://_Assets/Audio/s4.mp3"}
+			elif v <= 6: result = {"en": "Mediocrity...", "cn": "平庸。安全，但也无聊。", "audio": "res://_Assets/Audio/s6.mp3"}
+			elif v <= 8: result = {"en": "Comfortable...", "cn": "很舒适。你已经忘了怎么奔跑。", "audio": "res://_Assets/Audio/s8.mp3"}
+			else:        result = {"en": "The golden parachute...", "cn": "金色的降落伞。别被噎死了。", "audio": "res://_Assets/Audio/selse.mp3"}
+		
 		"pride":
-			if v <= 2: 
-				playTTS("res://_Assets/Audio/p2.mp3")
-				return {"en": "A doormat. Everyone wipes their feet.", "cn": "一块地垫。谁都能踩两脚。"}
-			if v <= 4: 
-				playTTS("res://_Assets/Audio/p4.mp3")
-				return {"en": "Weak knees. You want to kneel.", "cn": "膝盖很软。你本能地想跪下。"}
-			if v <= 6: 
-				playTTS("res://_Assets/Audio/p6.mp3")
-				return {"en": "A healthy ego. How common.", "cn": "健康的自尊。多么普通。"}
-			if v <= 8: 
-				playTTS("res://_Assets/Audio/p8.mp3")
-				return {"en": "Nose high. You will drown in rain.", "cn": "鼻孔朝天。下雨时会被淹死的。"}
-			playTTS("res://_Assets/Audio/pelse.mp3")
-			return {"en": "Stiff neck. Perfect for hanging.", "cn": "脖子真硬。很适合挂在绞刑架上。"}
+			if v <= 2:   result = {"en": "A doormat...", "cn": "一块地垫。谁都能踩两脚。", "audio": "res://_Assets/Audio/p2.mp3"}
+			elif v <= 4: result = {"en": "Weak knees...", "cn": "膝盖很软。你本能地想跪下。", "audio": "res://_Assets/Audio/p4.mp3"}
+			elif v <= 6: result = {"en": "Healthy ego...", "cn": "健康的自尊。多么普通。", "audio": "res://_Assets/Audio/p6.mp3"}
+			elif v <= 8: result = {"en": "Nose high...", "cn": "鼻孔朝天。下雨时会被淹死的。", "audio": "res://_Assets/Audio/p8.mp3"}
+			else:        result = {"en": "Stiff neck...", "cn": "脖子真硬。很适合挂在绞刑架上。", "audio": "res://_Assets/Audio/pelse.mp3"}
+			
 		"entropy":
-			if v <= 2: 
-				playTTS("res://_Assets/Audio/e2.mp3")
-				return {"en": "Blind. Blissfully ignorant.", "cn": "瞎子。无知是福。"}
-			if v <= 6: 
-				playTTS("res://_Assets/Audio/e6.mp3")
-				return {"en": "You see what they want you to see.", "cn": "你只看得到别人想让你看的。"}
-			playTTS("res://_Assets/Audio/eelse.mp3")
-			return {"en": "You see the chaos. Can you handle it?", "cn": "你看见了混沌。但你能承受吗？"}
+			if v <= 2:   result = {"en": "Blind...", "cn": "瞎子。无知是福。", "audio": "res://_Assets/Audio/e2.mp3"}
+			elif v <= 6: result = {"en": "You see...", "cn": "你只看得到别人想让你看的。", "audio": "res://_Assets/Audio/e6.mp3"}
+			else:        result = {"en": "Chaos...", "cn": "你看见了混沌。但你能承受吗？", "audio": "res://_Assets/Audio/eelse.mp3"}
+			
 		"sensitivity":
-			if v <= 3: 
-				playTTS("res://_Assets/Audio/sen3.mp3")
-				return {"en": "Stone heart. Nothing hurts.", "cn": "铁石心肠。什么都伤不了你。"}
-			if v >= 8: 
-				playTTS("res://_Assets/Audio/sen8.mp3")
-				return {"en": "Exposed nerves. Breathing hurts.", "cn": "神经裸露。连呼吸都会痛。"}
-	playTTS("res://_Assets/Audio/intreseChoice.mp3")		
-	return {"en": "Interesting choice...", "cn": "有趣的选择……"}
+			# 注意：你之前的逻辑里 4-7 是没有对应台词的，会掉到默认里
+			if v <= 3:   result = {"en": "Stone heart...", "cn": "铁石心肠。什么都伤不了你。", "audio": "res://_Assets/Audio/sen3.mp3"}
+			elif v >= 8: result = {"en": "Exposed nerves...", "cn": "神经裸露。连呼吸都会痛。", "audio": "res://_Assets/Audio/sen8.mp3"}
+			# 剩下的中间值会使用顶部的 default result
+			
+	return result
 
 # --- 职业选择 ---
 func _on_origin_selected(index):
