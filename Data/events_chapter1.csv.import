@@ -1,17 +1,3 @@
 [remap]
 
-importer="csv_translation"
-type="Translation"
-uid="uid://mc6qpky1hcvn"
-
-[deps]
-
-files=["res://Data/events_chapter1.Name.translation", "res://Data/events_chapter1.Type.translation", "res://Data/events_chapter1.BaseStress.translation", "res://Data/events_chapter1.APCost.translation", "res://Data/events_chapter1.MoneyChange.translation", "res://Data/events_chapter1.SettlementChange.translation", "res://Data/events_chapter1.Notes.translation"]
-
-source_file="res://Data/events_chapter1.csv"
-dest_files=["res://Data/events_chapter1.Name.translation", "res://Data/events_chapter1.Type.translation", "res://Data/events_chapter1.BaseStress.translation", "res://Data/events_chapter1.APCost.translation", "res://Data/events_chapter1.MoneyChange.translation", "res://Data/events_chapter1.SettlementChange.translation", "res://Data/events_chapter1.Notes.translation"]
-
-[params]
-
-compress=true
-delimiter=0
+importer="keep"

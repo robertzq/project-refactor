@@ -1,165 +1,307 @@
 extends Node
 
-# --- 核心数值 (从你的策划案直接搬运) ---
-var stats = {
-	"fin_security": 0,    # P_fin: 经济安全感 (0-10)
-	"pride": 5,           # P_pride: 自尊 (0-10)
-	"sensitivity": 1.0,   # P_sens: 敏感度
-	"money": 2000,        # 现金
-	"anxiety": 20.0,      # A_t: 当前焦虑
-	"settlement": 0,      # S_total: 沉淀值
-	"ap": 100             # AP: 行动力
-}
+# ==============================================================================
+# 1. 核心属性库 (The Internal Engine)
+# ==============================================================================
 
-# --- 事件数据库 ---
-# 结构: { "事件ID": { name, type, desc... } }
-var event_db = {}
-# 核心灵魂属性 (0-10)
-var soul_stats = {
-	"security": 3,  # 安全感: 决定抗压能力
-	"entropy": 3,   # 信息熵: 决定视野广度
-	"pride": 5,     # 自尊: 决定精神杠杆
-	"focus": 5      # 执行力: 决定长线效率
-}
-# --- 迷雾树配置 (Life Path Tree) ---
-# visibility_req: 解锁视野需要的属性阈值
-#   - entropy: 信息熵 (见世面)
-#   - security: 安全感 (兜底能力)
-# cost: 执行需要的资源 (比如钱/沉淀值)
+# [基础资源]
+var money: int = 0          # 资金 (影响生存)
+var project_progress: float = 0.0 # 项目进度 (影响通关)
 
-var life_path_db = {
-	"part_time": {
-		"name": "兼职打工",
-		"desc": "出卖廉价劳动力换取金钱。",
-		"type": "work",
-		"req_entropy": 0,   # 谁都知道能打工
-		"req_security": 0,
-		"status": "unlocked" # 默认解锁
-	},
-	"postgrad": {
-		"name": "国内考研",
-		"desc": "千军万马过独木桥，延缓就业压力。",
-		"type": "study",
-		"req_entropy": 2,   # 稍微有点认知就知道考研
-		"req_security": 3,  # 需要一点家里支持(不能马上工作)
-		"status": "locked"
-	},
-	"study_abroad": {
-		"name": "出国留学",
-		"desc": "去看看外面的世界。需要极高的认知和家底。",
-		"type": "study",
-		"req_entropy": 8,   # 【高门槛】没见过世面的人根本想不到这条路
-		"req_security": 6,  # 【高门槛】没钱不敢想
-		"status": "locked"
-	},
-	"startup": {
-		"name": "休学创业",
-		"desc": "九死一生的赌博。要么财富自由，要么负债累累。",
-		"type": "risk",
-		"req_entropy": 5,
-		"req_security": 9,  # 【极高门槛】只有输得起的人才敢看这条路
-		"status": "locked"
-	},
-	"gap_year": {
-		"name": "间隔年 (Gap Year)",
-		"desc": "停下来，去流浪，去寻找自我。",
-		"type": "special",
-		"req_entropy": 9,   # 极高认知：意识到人生不是轨道而是旷野
-		"req_security": 5,
-		"status": "locked"
-	}
-}
+# [时间系统]
+var current_week: int = 1   # 当前周数 (1-2周为上半月，3-4周为下半月)
+var total_weeks: int = 24   # 假设玩半年 (24周)，或者一学期
+var current_cycle_log: Array = [] # 存储这半个月发生的所有事情（用于写周报）
 
-# 辅助函数：计算节点的可见性
-# 返回: 0=隐形(Invisible), 1=模糊(Blurred), 2=清晰(Clear)
-func check_path_visibility(path_id: String) -> int:
-	var node = life_path_db[path_id]
-	var score = 0
-	
-	# 检查信息熵 (视野)
-	if soul_stats["entropy"] >= node["req_entropy"]:
-		score += 1
-	# 检查安全感 (胆量)
-	if soul_stats["security"] >= node["req_security"]:
-		score += 1
-		
-	# 特殊逻辑：如果已经解锁了，就保持清晰
-	if node["status"] == "unlocked":
-		return 2
-		
-	return score
-# 初始点数池
-const MAX_SOUL_POINTS = 20
+# [项目系统]
+const PROGRESS_GOAL = 100.0 # 目标
 
-# 职业/出身预设 (Elden Ring 风格)
-var origins = {
-	"做题家": {"security": 2, "entropy": 1, "pride": 5, "focus": 10},
-	"野蛮人": {"security": 8, "entropy": 3, "pride": 2, "focus": 5},
-	"书香门第": {"security": 2, "entropy": 9, "pride": 8, "focus": 3},
-	"无用之人": {"security": 5, "entropy": 5, "pride": 5, "focus": 5}
-}
+# [四大维度的核心参数]
+var fin_security: int = 5   # 家境 (P_fin): 提供金钱抗性
+var pride: int = 5          # 自尊 (P_pride): 增加 EGO 伤害
+var entropy: int = 5        # 熵/视野: 影响工作难度
+var sensitivity: float = 1.0 # 敏感度 (P_sens): 全局伤害乘区
+var base_exec: float = 1.0  # 执行力基数 (E_base): 影响工作效率
 
-# 辅助：重置属性
-func set_soul_stats(new_stats: Dictionary):
-	soul_stats = new_stats.duplicate()
-	
-# --- 初始化 ---
+# [状态记录]
+var current_anxiety: float = 0.0 # 当前焦虑值
+var traits: Array = []           # 特质列表 (如 "背水一战", "卷王")
+var recovery_strategy: String = "Explorer" # <--- 【已补回】回血策略 (Extrovert/Introvert/Explorer)
+var is_employed: bool = false
+
+var sedimentation: int = 0   # 沉淀值
+# 1. 定义信号 (通知 UI 刷新)
+signal vision_improved(new_entropy, message) # 当眼界提升时发出信号
+
+# 2. 定义阈值
+const SEDIMENTATION_THRESHOLD = 5 # 每积攒 5 点沉淀，提升 1 点眼界
+# --- ✅ 新增：人生路径数据库 (从 JSON 加载) ---
+var life_path_db: Dictionary = {}
+# [日记系统]
+# 存储结构: [{ "type": "WORK", "val": 25, "desc": "死磕二叉树" }, ...]
+var journal_logs: Array = []
+# ==============================================================================
+# 2. 游戏初始化 (Game Flow)
+# ==============================================================================
 func _ready():
-	load_events_from_csv()
-	print("大脑已上线。当前加载事件数: ", event_db.size())
-
-# --- CSV 解析器 (Godot 4.x版) ---
-func load_events_from_csv():
-	var file_path = "res://Data/events_chapter1.csv"
+	# 游戏启动时，加载 JSON 数据
+	load_life_paths_from_json("res://Data/life_paths.json")
 	
-	if not FileAccess.file_exists(file_path):
-		printerr("错误：找不到CSV文件！请检查路径: ", file_path)
-		return
-
-	var file = FileAccess.open(file_path, FileAccess.READ)
+# 初始化角色模板 (在游戏开始或重开时调用)
+func init_character(archetype: String):
+	print(">>> 正在初始化角色模板: ", archetype)
 	
-	# 跳过第一行 (标题行: ID,Name,Type...)
-	var headers = file.get_csv_line()
+	# 1. 重置所有动态状态
+	current_anxiety = 0
+	project_progress = 0
+	traits = []
+	recovery_strategy = "Explorer" # 默认值，会在火车问卷中被修改
 	
-	while not file.eof_reached():
-		var line = file.get_csv_line()
-		
-		# 防止空行报错
-		if line.size() < 2:
-			continue
+	# 2. 根据出身设定初始数值
+	match archetype:
+		"STRIVER": # 小镇做题家
+			fin_security = 2
+			pride = 7
+			base_exec = 1.2
+			sensitivity = 1.2
+			money = 800
+			add_trait("卷王")
 			
-		# 解析每一列 (根据你的CSV结构: ID, Name, Type, BaseStress...)
-		var id = line[0]
-		var data = {
-			"id": id,
-			"name": line[1],
-			"type": line[2],
-			"base_stress": int(line[3]),
-			"ap_cost": int(line[4]),
-			"money_change": int(line[5]),
-			"settlement_change": int(line[6]),
-			"description": line[7] # 对应 Notes/Story
-		}
+		"SLACKER": # 摆烂富二代
+			fin_security = 8
+			pride = 4
+			base_exec = 0.8
+			sensitivity = 0.9
+			money = 5000
+			add_trait("松弛感")
+			
+		_: # 默认 (Default)
+			fin_security = 5
+			pride = 5
+			base_exec = 1.0
+			sensitivity = 1.0
+			money = 2000
+
+# ==============================================================================
+# 3. 核心数学公式 (The Soul Algorithm v3.2)
+# ==============================================================================
+
+# [3.1] 获取胆量 (Boldness)
+func get_boldness() -> float:
+	return (fin_security * 0.4) + (pride * 0.6)
+
+# [3.2] 获取焦虑上限 (Breakdown Limit)
+func get_max_anxiety_limit() -> float:
+	return 80.0 * base_exec
+
+# [3.3] 获取当前工作效率 (Efficiency)
+func get_efficiency() -> Dictionary:
+	var final_eff = base_exec
+	var curse = "无"
+	
+	# 简单的诅咒判定示例
+	if fin_security > 7 and current_anxiety < 30:
+		final_eff *= 0.7
+		curse = "安逸诅咒"
+	elif get_boldness() < 4.0:
+		final_eff *= 0.8
+		curse = "胆怯诅咒"
 		
-		event_db[id] = data
+	return {"value": final_eff, "curse": curse}
 
-# --- 功能函数：根据地点获取随机事件 ---
-func get_random_event(building_id: String):
-	# 暂时写个简单的：如果是 LIB 就返回机房通宵，否则返回默认
-	# 后续我们会在这里写复杂的随机权重逻辑
+# [3.4] 压力结算核心公式
+# base_val: 基础数值
+# type: 类型 (MONEY, EGO, GEN, STUDY, WORK)
+# is_working: 是否处于兼职/工作状态 (影响避难所判定)
+func apply_stress(base_val: float, type: String, is_working: bool = false) -> Dictionary:
 	
-	if building_id == "LIB":
-		# 尝试返回 "机房通宵" 事件，如果CSV没读到，就返回一个假数据防止报错
-		return event_db.get("EVT_108", _get_fallback_event())
-	elif building_id == "DORM":
-		return event_db.get("EVT_100", _get_fallback_event())
-	else:
-		return _get_fallback_event()
+	# --- A. 回血逻辑 (负数) ---
+	if base_val < 0:
+		# 可以在这里加入 recovery_strategy 的判断逻辑
+		# 比如: 如果是 Extrovert 且 type=="SOCIAL"，回血加倍
+		var heal_amount = base_val
+		
+		# 简单示例: 高敏感的人回血也快
+		heal_amount *= sensitivity
+		
+		current_anxiety += heal_amount
+		if current_anxiety < 0: current_anxiety = 0
+		print(">> [Global] 治愈: %.1f | 当前焦虑: %.1f" % [heal_amount, current_anxiety])
+		return {"damage": heal_amount, "current_anxiety": current_anxiety}
 
-func _get_fallback_event():
+	# --- B. 扣血逻辑 (正数) ---
+	
+	# Step 1: 计算原始压力 (Omega)
+	var omega = base_val
+	var log_reason = ""
+	
+	match type:
+		"MONEY":
+			# 没钱时伤害巨高：基础值 - (家境 * 2.0)
+			# 例如：家境2，减免4；家境8，减免16
+			omega = base_val - (fin_security * 2.0)
+			log_reason = "家境修正"
+			
+		"EGO":
+			# 自尊越高伤害越高：基础值 + (自尊 * 0.5)
+			omega = base_val + (pride * 0.5)
+			log_reason = "自尊修正"
+		
+		"WORK", "STUDY":
+			# 熵越高(迷茫)，做同样的事越累
+			# 公式: 基础值 * (0.8 + 熵 * 0.05)
+			# 例: 熵5 -> 1.05倍; 熵10 -> 1.3倍; 熵0 -> 0.8倍
+			var entropy_mult = 0.8 + (entropy * 0.05)
+			omega = base_val * entropy_mult
+			log_reason = "认知修正(熵%d)" % entropy
+				
+		_:
+			omega = base_val
+			log_reason = "通用"
+
+	# Step 2: 避难所修正 (穷人打工保护机制)
+	if is_employed and fin_security < 3:
+		omega -= 8.0
+		log_reason += "+避难所"
+	
+	if omega < 0: omega = 0 # 伤害不能为负
+
+	# Step 3: 全局敏感度放大
+	var final_damage = omega * sensitivity
+	
+	# 应用结果
+	current_anxiety += final_damage
+	
+	# 打印战斗日志
+	print("---------------------------------------")
+	print("🩸 [Global] 压力结算 (%s)" % type)
+	print("   公式: (基础%.0f -> 修正%.1f [%s]) x 敏感%.1f = 最终%.1f" % [base_val, omega, log_reason, sensitivity, final_damage])
+	print("   当前焦虑: %.1f / %.1f" % [current_anxiety, get_max_anxiety_limit()])
+	print("---------------------------------------")
+
 	return {
-		"name": "无事发生",
-		"description": "这里空荡荡的，什么也没有。",
-		"options": []
+		"damage": final_damage,
+		"current_anxiety": current_anxiety,
+		"is_breakdown": current_anxiety >= get_max_anxiety_limit()
 	}
+
+# ==============================================================================
+# 4. 辅助工具
+# ==============================================================================
+
+func add_trait(t_name):
+	if t_name not in traits:
+		traits.append(t_name)
+		print(">> [Global] 获得特质: ", t_name)
+
+# 建筑交互 -> 事件查找器桥梁
+func get_random_event(building_id: String) -> Dictionary:
+	var trigger_type = "GEN"
+	match building_id:
+		"DORM": trigger_type = "dorm_enter"
+		"LIB":  trigger_type = "lib_enter"
+		"CAFE": trigger_type = "cafe_enter"
 	
+	if has_node("/root/EventManager"):
+		var evt = get_node("/root/EventManager").check_for_event(trigger_type)
+		if evt != null: return evt
+
+	# 兜底空事件
+	return {"id": "none", "title": "无事发生", "desc": "周围很安静。", "options": "离开", "effect_a": ""}
+
+# --- 核心：增加沉淀并检查顿悟 ---
+# --- 1. 沉淀值逻辑 ---
+func add_sedimentation(amount: int):
+	var old_level = int(sedimentation / SEDIMENTATION_THRESHOLD)
+	
+	sedimentation += amount
+	print(">> [Global] 沉淀增加: %d (当前: %d)" % [amount, sedimentation])
+	
+	var new_level = int(sedimentation / SEDIMENTATION_THRESHOLD)
+	if new_level > old_level:
+		var gain = new_level - old_level
+		entropy += gain # 提升眼界
+		var msg = "灵光一闪！眼界提升了 +%d" % gain
+		print("✨ " + msg)
+		emit_signal("vision_improved", entropy, msg)
+
+# --- 2. JSON 数据加载逻辑 ---
+func load_life_paths_from_json(path: String):
+	if not FileAccess.file_exists(path):
+		printerr("❌ 找不到人生路径配置文件: ", path)
+		return
+		
+	var file = FileAccess.open(path, FileAccess.READ)
+	var content = file.get_as_text()
+	var json = JSON.new()
+	var error = json.parse(content)
+	
+	if error == OK:
+		life_path_db = json.data
+		print("✅ 人生路径树加载完成，共 ", life_path_db.size(), " 条路径。")
+	else:
+		printerr("❌ JSON 解析失败: ", json.get_error_message())
+		
+# --- 顿悟逻辑 (Epiphany) ---
+func trigger_epiphany(level_gain: int):
+	# 提升眼界 (Entropy)
+	# 设定里: Entropy 代表"视野半径"。数值越大，能看到的节点越远。
+	entropy += level_gain 
+	
+	var msg = "灵光一闪！经过长时间的沉淀，你的眼界提升了！(视野 +%d)" % level_gain
+	print("✨✨✨ " + msg + " ✨✨✨")
+	
+	# 发出信号，让 UI_LifePath (迷雾树) 知道该解锁新层级了
+	emit_signal("vision_improved", entropy, msg)
+	
+	# 播放一个全局提示音效 (可选)
+	# if has_node("/root/MainWorld/SFX_LevelUp"): ...
+# --- 3. 核心：迷雾检测逻辑 (0:不可见, 1:模糊, 2:清晰) ---
+func check_path_visibility(path_id: String) -> int:
+	if not life_path_db.has(path_id): return 0
+	
+	var path_data = life_path_db[path_id]
+	var req_entropy = path_data.get("req_entropy", 0) # 需求眼界
+	
+	# 逻辑设定：
+	# 1. 如果眼界 >= 需求 -> 清晰 (2)
+	if entropy >= req_entropy:
+		return 2
+	# 2. 如果眼界只差一点点 (比如差2点以内) -> 模糊 (1)
+	elif entropy >= req_entropy - 2:
+		return 1
+	# 3. 差距太大 -> 隐形 (0)
+	else:
+		return 0
+		
+# Global.gd
+
+
+
+# --- 新增：记录故事的函数 ---
+func log_story(text: String):
+	current_cycle_log.append(text)
+	print(">> [Story] 记录: ", text)
+
+# --- 新增：推进时间 ---
+func advance_time():
+	current_week += 1
+	print(">> [Time] 进入第 %d 周" % current_week)
+	
+	# 检查是否到了半月结算点 (每2周一次，即第2, 4, 6...周结束时)
+	if current_week % 2 != 0: # 奇数周(第3周)刚开始，说明偶数周(第2周)刚结束
+		return true # 需要结算
+	return false
+	
+# --- 记录日记的接口 ---
+func record_journal(type: String, val: float, desc: String):
+	journal_logs.append({
+		"type": type,
+		"val": val,
+		"desc": desc
+	})
+	print(">> [Journal] 已记录: [%s] %s (%.1f)" % [type, desc, val])
+
+# --- 清空日记 (每半月调用) ---
+func clear_journal():
+	journal_logs.clear()

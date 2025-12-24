@@ -1,0 +1,57 @@
+
+
+[slowly] Back then... [chuckles] we had no phones—just dirt roads, radio songs, and big dreams. [whispers] I kissed her under the old elm by Miller’s Creek, swore I’d never leave. [coughs] But then the war came, and youth slipped through my fingers like smoke. [chuckles] Funny... how a moment can last forever... even when everything else fades.
+
+
+So... you wish to reconstruct a soul?
+
+Survival mode. The dirt tastes bitter.
+
+Just enough to starve slowly.
+
+Mediocrity. Safe, but boring.
+
+Comfortable. You forgot how to run.
+
+
+The golden parachute. Don't choke.
+
+A doormat. Everyone wipes their feet.
+
+Weak knees. You want to kneel.
+
+A healthy ego. How common.
+
+Nose high. You will drown in rain.
+
+Stiff neck. Perfect for hanging.
+
+Blind. Blissfully ignorant.
+
+You see what they want you to see.
+
+You see the chaos. Can you handle it?
+
+Stone heart. Nothing hurts.
+
+Exposed nerves. Breathing hurts.
+
+		"security":
+			if v <= 2: return {"en": "Survival mode. The dirt tastes bitter.", "cn": "生存模式。土的味道很苦吧？"}
+			if v <= 4: return {"en": "Just enough to starve slowly.", "cn": "这点钱，刚够你慢慢饿死。"}
+			if v <= 6: return {"en": "Mediocrity. Safe, but boring.", "cn": "平庸。安全，但也无聊。"}
+			if v <= 8: return {"en": "Comfortable. You forgot how to run.", "cn": "很舒适。你已经忘了怎么奔跑。"}
+			return {"en": "The golden parachute. Don't choke.", "cn": "金色的降落伞。别被噎死了。"}
+		"pride":
+			if v <= 2: return {"en": "A doormat. Everyone wipes their feet.", "cn": "一块地垫。谁都能踩两脚。"}
+			if v <= 4: return {"en": "Weak knees. You want to kneel.", "cn": "膝盖很软。你本能地想跪下。"}
+			if v <= 6: return {"en": "A healthy ego. How common.", "cn": "健康的自尊。多么普通。"}
+			if v <= 8: return {"en": "Nose high. You will drown in rain.", "cn": "鼻孔朝天。下雨时会被淹死的。"}
+			return {"en": "Stiff neck. Perfect for hanging.", "cn": "脖子真硬。很适合挂在绞刑架上。"}
+		"entropy":
+			if v <= 2: return {"en": "Blind. Blissfully ignorant.", "cn": "瞎子。无知是福。"}
+			if v <= 6: return {"en": "You see what they want you to see.", "cn": "你只看得到别人想让你看的。"}
+			return {"en": "You see the chaos. Can you handle it?", "cn": "你看见了混沌。但你能承受吗？"}
+		"sensitivity":
+			if v <= 3: return {"en": "Stone heart. Nothing hurts.", "cn": "铁石心肠。什么都伤不了你。"}
+			if v >= 8: return {"en": "Exposed nerves. Breathing hurts.", "cn": "神经裸露。连呼吸都会痛。"}

@@ -38,6 +38,18 @@ offset_top = 61.0
 offset_right = 279.0
 offset_bottom = 89.0
 
+[node name="TitleLabel" type="Label" parent="Control/Panel"]
+layout_mode = 0
+offset_top = 48.0
+offset_right = 40.0
+offset_bottom = 71.0
+
+[node name="ResultLog" type="Label" parent="Control/Panel"]
+layout_mode = 0
+offset_top = 66.0
+offset_right = 40.0
+offset_bottom = 89.0
+
 [node name="StatsPanel" type="HBoxContainer" parent="."]
 offset_right = 174.0
 offset_bottom = 30.0
