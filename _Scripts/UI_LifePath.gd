@@ -105,13 +105,27 @@ func create_node_button(data: Dictionary) -> Button:
 			# 绑定点击
 			btn.pressed.connect(_on_node_clicked.bind(id))
 			
-		Global.PathStatus.SELECTED:
-			btn.text = "★ " + data["name"] + " ★\n(已点亮)"
-			btn.disabled = true # 选过了就不能再点
+		Global.PathStatus.IN_PROGRESS:
+			# 🔥 新状态：显示正在进行中
+			btn.text = "▶ " + data["name"] + " ◀\n正在攻克... %.1f%%" % Global.project_progress
+			btn.disabled = true # 既然正在做，就不能重复点了 (或者你可以做成“取消项目”)
+			btn.modulate = Color(0.0, 1.0, 1.0, 1) # 青色高亮
+			btn.add_theme_color_override("font_color", Color.BLACK) # 醒目
+			
+		Global.PathStatus.COMPLETED:
+			# ✅ 原来的 SELECTED
+			btn.text = "★ " + data["name"] + " ★\n(已掌握)"
+			btn.disabled = true
 			btn.modulate = Color(1, 0.8, 0.2, 1) # 金色
 			
 	return btn
 
 func _on_node_clicked(id):
-	Global.select_path(id)
-	refresh_forest() # 选完立刻刷新，为了让互斥锁立刻生效
+	# 1. 只有 AVAILABLE 的才能点
+	if Global.get_path_status(id) == Global.PathStatus.AVAILABLE:
+		# 2. 如果手里已经有项目了，要提示玩家吗？(简化版：直接覆盖)
+		Global.start_project(id)
+		
+		# 3. 关闭 UI，提示玩家开始干活
+		toggle_ui()
+		# 这里可以加个 Toast: "目标已设定：[项目名]。去图书馆努力吧！"

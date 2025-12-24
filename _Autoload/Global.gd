@@ -10,11 +10,13 @@ var project_progress: float = 0.0 # 项目进度 (影响通关)
 
 # [时间系统]
 var current_week: int = 1   # 当前周数 (1-2周为上半月，3-4周为下半月)
-var total_weeks: int = 24   # 假设玩半年 (24周)，或者一学期
+const WEEKS_PER_SETTLEMENT = 2  # 每 2 周结算一次
+signal time_advanced(week)      # 时间推进信号
 var current_cycle_log: Array = [] # 存储这半个月发生的所有事情（用于写周报）
 
 # [项目系统]
 const PROGRESS_GOAL = 100.0 # 目标
+var current_active_project_id: String = "" # 当前正在攻克的节点ID
 
 # [四大维度的核心参数]
 var fin_security: int = 5   # 家境 (P_fin): 提供金钱抗性
@@ -46,8 +48,9 @@ enum PathStatus {
 	HIDDEN = 0,      # 眼界不够，完全不可见
 	BLURRED = 1,     # 眼界快到了，或者是可见但条件不满足（迷雾）
 	AVAILABLE = 2,   # 条件满足，可选
-	SELECTED = 3,    # 已经选了
-	LOCKED = 4       # 因为选了互斥的其他路，这条路被锁死
+	IN_PROGRESS = 3, # 🔥 新增：正在攻克中
+	COMPLETED = 4,   # ✅ 改名：已彻底完成 (原 SELECTED)
+	LOCKED = 5       # 互斥锁死
 }
 # [日记系统]
 # 存储结构: [{ "type": "WORK", "val": 25, "desc": "死磕二叉树" }, ...]
@@ -166,7 +169,9 @@ func apply_stress(base_val: float, type: String, is_working: bool = false) -> Di
 		heal_amount *= sensitivity
 		
 		current_anxiety += heal_amount
-		if current_anxiety < 0: current_anxiety = 0
+		if current_anxiety < 0:
+			current_anxiety = 0
+			
 		print(">> [Global] 治愈: %.1f | 当前焦虑: %.1f" % [heal_amount, current_anxiety])
 		return {"damage": heal_amount, "current_anxiety": current_anxiety}
 
@@ -212,7 +217,8 @@ func apply_stress(base_val: float, type: String, is_working: bool = false) -> Di
 	
 	# 应用结果
 	current_anxiety += final_damage
-	
+	if current_anxiety >= get_max_anxiety_limit():
+		trigger_breakdown()
 	# 打印战斗日志
 	print("---------------------------------------")
 	print("   [Global] 压力结算 (%s)" % type)
@@ -226,6 +232,20 @@ func apply_stress(base_val: float, type: String, is_working: bool = false) -> Di
 		"is_breakdown": current_anxiety >= get_max_anxiety_limit()
 	}
 
+func trigger_breakdown():
+	print(">>> ⚠️ 玩家崩溃！ <<<")
+	# 1. 强制清空当前项目进度 (作为惩罚)
+	# project_progress *= 0.5 
+	
+	# 2. 强制休息几天 (这需要你在 MainWorld 处理信号)
+	# emit_signal("player_breakdown")
+	
+	# 3. 记录惨痛日记
+	record_journal("BREAKDOWN", 0, "精神崩溃")
+	log_story("【崩溃】那根紧绷的弦终于断了。你在医院躺了三天，错过了很多截止日期。")
+	
+	# 4. 恢复部分焦虑 (因为休息了)
+	current_anxiety = get_max_anxiety_limit() * 0.5
 # ==============================================================================
 # 4. 辅助工具
 # ==============================================================================
@@ -324,15 +344,6 @@ func log_story(text: String):
 	current_cycle_log.append(text)
 	print(">> [Story] 记录: ", text)
 
-# --- 新增：推进时间 ---
-func advance_time():
-	current_week += 1
-	print(">> [Time] 进入第 %d 周" % current_week)
-	
-	# 检查是否到了半月结算点 (每2周一次，即第2, 4, 6...周结束时)
-	if current_week % 2 != 0: # 奇数周(第3周)刚开始，说明偶数周(第2周)刚结束
-		return true # 需要结算
-	return false
 	
 # --- 记录日记的接口 ---
 func record_journal(type: String, val: float, desc: String):
@@ -347,35 +358,6 @@ func record_journal(type: String, val: float, desc: String):
 func clear_journal():
 	journal_logs.clear()
 
-# --- 2. 路径状态检查 (核心逻辑) ---
-func get_path_status(path_id: String) -> int:
-	if not life_path_db.has(path_id): return PathStatus.HIDDEN
-	
-	# A. 如果已经选过了
-	if path_id in selected_paths:
-		return PathStatus.SELECTED
-		
-	var data = life_path_db[path_id]
-	var req_entropy = data.get("req_entropy", 0)
-	var mutex = data.get("mutex_group", "")
-	
-	# B. 检查互斥锁 (如果同组的其他路被选了，这条路就废了)
-	if mutex != "" and mutex in active_mutex_groups:
-		return PathStatus.LOCKED
-	
-	# C. 检查眼界 (迷雾机制)
-	if entropy < req_entropy - 2: # 差太多，完全看不见
-		return PathStatus.HIDDEN
-	if entropy < req_entropy: # 差一点，模糊
-		return PathStatus.BLURRED
-		
-	# D. 检查硬性门槛 (钱、进度、前置父节点)
-	# 示例：检查父节点是否已选
-	if data.has("parent"):
-		if data["parent"] not in selected_paths:
-			return PathStatus.BLURRED # 父节点没点亮，子节点也不能点
-			
-	return PathStatus.AVAILABLE
 
 # --- 3. 选择路径 ---
 func select_path(path_id: String):
@@ -397,3 +379,96 @@ func select_path(path_id: String):
 	
 	# 获得收益 (示例)
 	if data.has("gain_sed"): add_sedimentation(data["gain_sed"])
+	
+# --- 时间推进逻辑 ---
+func advance_time():
+	current_week += 1
+	print(">> [Time] 进入第 %d 周" % current_week)
+	emit_signal("time_advanced", current_week)
+	
+	# 检查是否需要半月结算 (偶数周结束时触发)
+	# 比如第2周结束进入第3周前，或者第2周刚过完
+	# 这里逻辑是：当 current_week 变成 3, 5, 7 时，说明前两周过完了
+	if (current_week - 1) % WEEKS_PER_SETTLEMENT == 0:
+		return true # 需要结算
+	return false
+
+# --- 路径状态检查 (更新) ---
+func get_path_status(path_id: String) -> int:
+	if not life_path_db.has(path_id): return PathStatus.HIDDEN
+	
+	# 1. 已经彻底完成的
+	if path_id in selected_paths:
+		return PathStatus.COMPLETED
+	
+	# 2. 🔥 正在做的
+	if path_id == current_active_project_id:
+		return PathStatus.IN_PROGRESS
+		
+	var data = life_path_db[path_id]
+	var req_entropy = data.get("req_entropy", 0)
+	var mutex = data.get("mutex_group", "")
+	
+	# 3. 互斥锁死
+	if mutex != "" and mutex in active_mutex_groups:
+		return PathStatus.LOCKED
+	
+	# 4. 迷雾逻辑
+	if entropy < req_entropy - 2: return PathStatus.HIDDEN
+	if entropy < req_entropy: return PathStatus.BLURRED
+	
+	# 5. 父节点检查 (必须父节点COMPLETED才能选子节点)
+	if data.has("parent"):
+		if data["parent"] not in selected_paths:
+			return PathStatus.BLURRED
+			
+	return PathStatus.AVAILABLE
+
+# --- 开始一个项目 (立项) ---
+func start_project(path_id: String):
+	current_active_project_id = path_id
+	project_progress = 0.0 # 进度归零，开始肝！
+	print(">>> 立项成功: ", life_path_db[path_id]["name"])
+
+# --- 检查项目是否完成 (每次加进度后调用) ---
+func check_project_completion() -> bool:
+	if current_active_project_id == "": return false
+	
+	if project_progress >= 100.0:
+		project_progress = 100.0 # 锁死在 100%
+		complete_active_project()
+		return true
+	return false
+
+# --- 完成项目 (结算) ---
+func complete_active_project():
+	var id = current_active_project_id
+	print(">>> 🎉 项目完成: ", id)
+	
+	# 1. 正式加入已完成列表
+	selected_paths.append(id)
+	
+	# 2. 激活互斥锁
+	var data = life_path_db[id]
+	if data.has("mutex_group"):
+		active_mutex_groups.append(data["mutex_group"])
+	
+	# 3. 获得一次性收益 (如眼界、沉淀)
+	if data.has("gain_entropy"): entropy += data["gain_entropy"]
+	if data.has("gain_sed"): add_sedimentation(data["gain_sed"])
+	
+	# 4. 清空当前项目
+	current_active_project_id = ""
+	project_progress = 0.0
+	
+	# 5. 发信号通知 UI
+	emit_signal("vision_improved", entropy, "项目完成！") # 复用刷新信号
+
+func show_settlement():
+	# 延迟一点点，等当前事件框关掉
+	await get_tree().create_timer(0.5).timeout
+	
+	var settlement = load("res://_Scenes/UI_Settlement.tscn").instantiate()
+	# 假设 UI_Settlement 会自动添加到 CanvasLayer
+	get_tree().root.add_child(settlement)
+	settlement.setup_report() # 生成报告

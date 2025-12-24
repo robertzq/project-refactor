@@ -11,19 +11,20 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Background" type="ColorRect" parent="Control"]
 layout_mode = 0
-offset_right = 284.0
-offset_bottom = 95.0
-color = Color(0.0035191667, 0.0035191681, 0.0035191672, 1)
+offset_right = 504.0
+offset_bottom = 259.0
+color = Color(0.060530342, 0.06053035, 0.060530327, 0.0627451)
 
 [node name="Panel" type="Panel" parent="Control"]
 layout_mode = 0
-offset_right = 283.0
-offset_bottom = 96.0
+offset_right = 507.0
+offset_bottom = 260.0
 
 [node name="Label" type="Label" parent="Control/Panel"]
 layout_mode = 0
@@ -34,9 +35,10 @@ text = "111"
 
 [node name="OptionContainer" type="VBoxContainer" parent="Control/Panel"]
 layout_mode = 0
+offset_left = 9.0
 offset_top = 61.0
-offset_right = 279.0
-offset_bottom = 89.0
+offset_right = 502.0
+offset_bottom = 105.0
 
 [node name="TitleLabel" type="Label" parent="Control/Panel"]
 layout_mode = 0
@@ -46,9 +48,9 @@ offset_bottom = 71.0
 
 [node name="ResultLog" type="Label" parent="Control/Panel"]
 layout_mode = 0
-offset_top = 66.0
+offset_top = 80.0
 offset_right = 40.0
-offset_bottom = 89.0
+offset_bottom = 103.0
 
 [node name="StatsPanel" type="HBoxContainer" parent="."]
 offset_right = 174.0
@@ -61,3 +63,11 @@ text = "Money: $0"
 [node name="AnxietyLabel" type="Label" parent="StatsPanel"]
 layout_mode = 2
 text = "Anxiety: 0%"
+
+[node name="TimeLabel" type="Label" parent="StatsPanel"]
+layout_mode = 2
+text = "Time:"
+
+[node name="ProjectLabel" type="Label" parent="StatsPanel"]
+layout_mode = 2
+text = "Project"

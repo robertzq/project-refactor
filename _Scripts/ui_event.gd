@@ -11,6 +11,8 @@ extends CanvasLayer
 # HUD 引用
 @onready var money_label = $StatsPanel/MoneyLabel
 @onready var anxiety_label = $StatsPanel/AnxietyLabel
+@onready var time_label = $StatsPanel/TimeLabel
+@onready var project_label = $StatsPanel/ProjectLabel
 # @onready var ap_label = $StatsPanel/APLabel 
 
 var current_event: Dictionary = {}
@@ -31,11 +33,19 @@ func update_hud():
 	if money_label:
 		money_label.text = "资金: ¥%d" % Global.money # 确保 Global.gd 里有 money
 	
-	if anxiety_label:
+	if time_label:
+		time_label.text = "第 %d 周" % Global.current_week
+	
+	# 项目显示
+		if Global.current_active_project_id != "":
+			var p_name = Global.life_path_db[Global.current_active_project_id]["name"]
+			project_label.text = "目标: %s\n进度: %.1f%%" % [p_name, Global.project_progress]
+		else:
+			project_label.text = "当前无目标\n(按TAB规划)"
 		# 假设 Global 里叫 anxiety 或者 current_anxiety，请保持一致
 		# 这里假设你 Global 里用的是 'sensitivity' 来代表焦虑阈值，或者你有单独的 anxiety
 		# 为了跑通，我先用假数据代替，你记得换成 Global.xxx
-		var current = Global.get("anxiety") if Global.get("anxiety") else 0.0
+		var current = Global.current_anxiety
 		var limit = 100.0 
 		
 		anxiety_label.text = "焦虑: %.1f / %.1f" % [current, limit]
@@ -49,7 +59,7 @@ func update_hud():
 # ========================================================
 func show_event(event_data: Dictionary):
 	current_event = event_data
-	print("UI 显示事件: ", event_data.get("id"))
+	print("UI 显示事件: ", event_data.get("id")+ "=>"+ event_data.get("title"))
 	
 	# 1. 填充文本
 	if title_label:
@@ -183,14 +193,39 @@ func parse_and_execute(command_str: String):
 			
 			"progress":
 				var val = float(parts[1])
-				# 核心：效率乘区！
-				var efficiency = Global.get_efficiency().value
-				var actual_gain = val * efficiency
-				Global.project_progress += actual_gain
-				print("   -> 项目进度: +%.1f (基础%s x 效率%.1f)" % [actual_gain, parts[1], efficiency])
-				Global.record_journal("PROGRESS", actual_gain, current_title)
-				# 记录故事：如果这真的是在干活
-				story_fragment = "在图书馆死磕项目，进度推进了 %.1f%%。" % actual_gain
+				
+				# 如果当前没有立项，进度加了也没用 (或者你可以设定为加通用经验)
+				if Global.current_active_project_id == "":
+					print("   -> 没有活跃项目，进度被浪费了...")
+					Global.record_journal("WASTE", 0, "无目标的努力")
+				else:
+					var eff = Global.get_efficiency().value
+					var actual = val * eff
+					Global.project_progress += actual
+					
+					# 记录日记
+					var p_name = Global.life_path_db[Global.current_active_project_id]["name"]
+					Global.record_journal("PROGRESS", actual, "推进项目: " + p_name)
+					
+					print("   -> 项目进度: +%.1f (当前: %.1f%%)" % [actual, Global.project_progress])
+					
+					# 🔥 核心检查：是否完工？
+					if Global.check_project_completion():
+						# 触发完工特效/弹窗
+						# 这里可以暂停游戏，弹出一个“项目完成！”的庆祝框
+						# 简单起见，我们先记入日记，下次半月结算时表扬
+						Global.record_journal("COMPLETE", 100, "完成里程碑: " + p_name)
+						Global.log_story("【里程碑达成】经过不懈努力，你终于拿下了《%s》！" % p_name)
+			
+			"time":
+				if parts[1] == "pass":
+					# 推进时间
+					var need_settlement = Global.advance_time()
+					
+					if need_settlement:
+						# 🛑 触发半月结算！
+						Global.show_settlement()
+						
 			_:
 				print("⚠️ 未知指令: ", action)
 				

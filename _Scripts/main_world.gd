@@ -14,14 +14,12 @@ func _ready():
 func _input(event):
 	# 按 "P" 键模拟半个月结束，弹出结算报告
 	if event.is_action_pressed("ui_accept"): # 或者自定义按键
-		show_settlement()
+		Global.show_settlement()
 		
 	if event.is_action_pressed("ui_end"): # 比如按 E 键
 		show_ending()
 
-func show_settlement():
-	var settlement = load("res://_Scenes/UI_Settlement.tscn").instantiate()
-	add_child(settlement)
+
 
 func show_ending():
 	var ending_text = EndingManager.generate_verdict()
