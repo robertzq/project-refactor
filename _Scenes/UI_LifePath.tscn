@@ -42,10 +42,11 @@ offset_bottom = 430.832
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="PathList" type="VBoxContainer" parent="Control/ScrollContainer"]
+[node name="TreeContainer" type="VBoxContainer" parent="Control/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+alignment = 2
 
 [node name="Button" type="Button" parent="Control"]
 layout_mode = 1

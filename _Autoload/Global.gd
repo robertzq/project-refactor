@@ -35,8 +35,20 @@ signal vision_improved(new_entropy, message) # 当眼界提升时发出信号
 
 # 2. 定义阈值
 const SEDIMENTATION_THRESHOLD = 5 # 每积攒 5 点沉淀，提升 1 点眼界
-# --- ✅ 新增：人生路径数据库 (从 JSON 加载) ---
+
+# --- 新增：人生路径数据库 (从 JSON 加载) ---
 var life_path_db: Dictionary = {}
+var selected_paths: Array = []        # 已选择的路径 ID
+var active_mutex_groups: Array = []   # 已激活的互斥组 (如 "junior_choice")
+var current_archetype_code = ""
+# === 状态枚举 ===
+enum PathStatus {
+	HIDDEN = 0,      # 眼界不够，完全不可见
+	BLURRED = 1,     # 眼界快到了，或者是可见但条件不满足（迷雾）
+	AVAILABLE = 2,   # 条件满足，可选
+	SELECTED = 3,    # 已经选了
+	LOCKED = 4       # 因为选了互斥的其他路，这条路被锁死
+}
 # [日记系统]
 # 存储结构: [{ "type": "WORK", "val": 25, "desc": "死磕二叉树" }, ...]
 var journal_logs: Array = []
@@ -56,24 +68,51 @@ func init_character(archetype: String):
 	project_progress = 0
 	traits = []
 	recovery_strategy = "Explorer" # 默认值，会在火车问卷中被修改
-	
+	current_archetype_code  = archetype
 	# 2. 根据出身设定初始数值
 	match archetype:
-		"STRIVER": # 小镇做题家
-			fin_security = 2
-			pride = 7
-			base_exec = 1.2
-			sensitivity = 1.2
-			money = 800
-			add_trait("卷王")
-			
-		"SLACKER": # 摆烂富二代
-			fin_security = 8
-			pride = 4
-			base_exec = 0.8
-			sensitivity = 0.9
+		# 1. 都会精英 (The Golden Child)
+		"ARCH_ELITE":
 			money = 5000
-			add_trait("松弛感")
+			fin_security = 8
+			pride = 6
+			entropy = 5 # 视野开阔，不需要太努力也能看到好路
+			add_trait("多才多艺") # 社交回血
+			add_trait("原生家庭") # 每月生活费+
+
+		# 2. 城市土著 (The Local Normie)
+		"ARCH_LOCAL":
+			money = 2000
+			fin_security = 5
+			pride = 4
+			entropy = 4 # 中规中矩
+			add_trait("本地人") # 周末回家回血
+
+		# 3. 霓虹暗面 (The Concrete Weed)
+		"ARCH_SURVIVOR":
+			money = 500
+			fin_security = 1
+			pride = 8
+			sensitivity = 1.5 # 高敏
+			entropy = 3 # 虽穷，但见识过社会残酷，比做题家稍微懂点
+			add_trait("早熟") # 打工减焦虑
+
+		# 4. 县城显贵 (The County Star)
+		"ARCH_COUNTY_STAR":
+			money = 4000
+			fin_security = 7
+			pride = 9 # 极高自尊
+			entropy = 2 # 信息闭塞，容易盲目自信
+			add_trait("宁做鸡头")
+
+		# 5. 错位过客 (The Disillusioned Striver) - 主角模板
+		"ARCH_STRIVER":
+			money = 800
+			fin_security = 3
+			base_exec = 1.3 # 执行力极强
+			pride = 7
+			entropy = 1 # 开局眼界极低！只知道死读书！
+			add_trait("意难平") # 没拿第一就焦虑
 			
 		_: # 默认 (Default)
 			fin_security = 5
@@ -81,6 +120,8 @@ func init_character(archetype: String):
 			base_exec = 1.0
 			sensitivity = 1.0
 			money = 2000
+	
+	print("初始眼界: ", entropy, " | 初始家境: ", fin_security)
 
 # ==============================================================================
 # 3. 核心数学公式 (The Soul Algorithm v3.2)
@@ -174,7 +215,7 @@ func apply_stress(base_val: float, type: String, is_working: bool = false) -> Di
 	
 	# 打印战斗日志
 	print("---------------------------------------")
-	print("🩸 [Global] 压力结算 (%s)" % type)
+	print("   [Global] 压力结算 (%s)" % type)
 	print("   公式: (基础%.0f -> 修正%.1f [%s]) x 敏感%.1f = 最终%.1f" % [base_val, omega, log_reason, sensitivity, final_damage])
 	print("   当前焦虑: %.1f / %.1f" % [current_anxiety, get_max_anxiety_limit()])
 	print("---------------------------------------")
@@ -246,7 +287,7 @@ func load_life_paths_from_json(path: String):
 func trigger_epiphany(level_gain: int):
 	# 提升眼界 (Entropy)
 	# 设定里: Entropy 代表"视野半径"。数值越大，能看到的节点越远。
-	entropy += level_gain 
+	entropy += level_gain
 	
 	var msg = "灵光一闪！经过长时间的沉淀，你的眼界提升了！(视野 +%d)" % level_gain
 	print("✨✨✨ " + msg + " ✨✨✨")
@@ -305,3 +346,54 @@ func record_journal(type: String, val: float, desc: String):
 # --- 清空日记 (每半月调用) ---
 func clear_journal():
 	journal_logs.clear()
+
+# --- 2. 路径状态检查 (核心逻辑) ---
+func get_path_status(path_id: String) -> int:
+	if not life_path_db.has(path_id): return PathStatus.HIDDEN
+	
+	# A. 如果已经选过了
+	if path_id in selected_paths:
+		return PathStatus.SELECTED
+		
+	var data = life_path_db[path_id]
+	var req_entropy = data.get("req_entropy", 0)
+	var mutex = data.get("mutex_group", "")
+	
+	# B. 检查互斥锁 (如果同组的其他路被选了，这条路就废了)
+	if mutex != "" and mutex in active_mutex_groups:
+		return PathStatus.LOCKED
+	
+	# C. 检查眼界 (迷雾机制)
+	if entropy < req_entropy - 2: # 差太多，完全看不见
+		return PathStatus.HIDDEN
+	if entropy < req_entropy: # 差一点，模糊
+		return PathStatus.BLURRED
+		
+	# D. 检查硬性门槛 (钱、进度、前置父节点)
+	# 示例：检查父节点是否已选
+	if data.has("parent"):
+		if data["parent"] not in selected_paths:
+			return PathStatus.BLURRED # 父节点没点亮，子节点也不能点
+			
+	return PathStatus.AVAILABLE
+
+# --- 3. 选择路径 ---
+func select_path(path_id: String):
+	if get_path_status(path_id) != PathStatus.AVAILABLE:
+		return
+		
+	print(">>> 选择了人生路径: ", path_id)
+	selected_paths.append(path_id)
+	
+	var data = life_path_db[path_id]
+	
+	# 激活互斥锁
+	if data.has("mutex_group"):
+		active_mutex_groups.append(data["mutex_group"])
+		
+	# 扣除代价 (示例)
+	if data.has("cost_money"): money -= data["cost_money"]
+	if data.has("cost_stress"): apply_stress(data["cost_stress"], "WORK")
+	
+	# 获得收益 (示例)
+	if data.has("gain_sed"): add_sedimentation(data["gain_sed"])

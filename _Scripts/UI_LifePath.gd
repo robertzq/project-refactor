@@ -1,14 +1,11 @@
 extends CanvasLayer
 
-@onready var path_list = $Control/ScrollContainer/PathList 
 @onready var root_control = $Control
+@onready var tree_container = $Control/ScrollContainer/TreeContainer # 确保路径对
 
 func _ready():
 	visible = false
 	root_control.visible = false
-	
-	# --- ✅ 关键修改：监听 Global 的眼界提升信号 ---
-	# 这样当你在事件里获得了 sed -> 触发 entropy 提升 -> 这里的 UI 就会自动刷新
 	Global.vision_improved.connect(_on_vision_improved)
 
 func _input(event):
@@ -20,58 +17,101 @@ func toggle_ui():
 	root_control.visible = visible
 	
 	if visible:
-		refresh_tree()
+		refresh_forest() # 每次打开都重画，确保状态最新
 		get_tree().paused = true
 	else:
 		get_tree().paused = false
 
-# 当眼界提升时，刷新列表并（可选）弹出提示
 func _on_vision_improved(new_val, msg):
-	# 如果 UI 正开着，就刷新一下
-	if visible:
-		refresh_tree()
-	# 这里其实可以加一个 HUD 的 Toast 弹窗提示玩家“发现新路径”
+	if visible: refresh_forest()
 
-func refresh_tree():
-	# 1. 清空旧按钮
-	for child in path_list.get_children():
+# === 核心：森林渲染逻辑 ===
+func refresh_forest():
+	# 1. 清空现有树
+	for child in tree_container.get_children():
 		child.queue_free()
 	
-	# 2. 遍历 Global 的配置 (现在是从 JSON 加载的了)
-	# 为了好看，我们可以按 req_entropy 排序 (JSON 是无序的)
-	var keys = Global.life_path_db.keys()
+	# 2. 将路径按 Tier 分组
+	# 结构: { 0: [data1, data2], 1: [data3] ... }
+	var tiers_data = {}
+	var max_tier = 0
 	
-	# 3. 生成按钮
-	for id in keys:
-		var config = Global.life_path_db[id]
-		# 调用 Global 写好的迷雾检测逻辑
-		var visibility = Global.check_path_visibility(id)
+	for id in Global.life_path_db:
+		var data = Global.life_path_db[id]
+		data["id"] = id # 把ID塞进去方便读取
+		var t = int(data.get("tier", 0))
 		
-		# 情况 A: 隐形 (Invisible)
-		if visibility == 0:
-			continue 
-			
-		var btn = Button.new()
-		btn.custom_minimum_size = Vector2(0, 80) # 高一点，因为有描述
-		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT # 左对齐比较好看
+		if not tiers_data.has(t): tiers_data[t] = []
+		tiers_data[t].append(data)
 		
-		# 情况 B: 模糊 (Blurred)
-		if visibility == 1:
-			btn.text = " [ 迷雾重重 ]\n (???) "
-			btn.disabled = true
-			btn.tooltip_text = "你的[眼界(Entropy)]不足。\n多去经历一些[深度沉淀]的事件吧。"
-			btn.modulate = Color(0.4, 0.4, 0.4, 0.5) # 灰色半透明
-			
-		# 情况 C: 清晰 (Clear)
-		elif visibility == 2:
-			btn.text = " 【" + config["name"] + "】\n  " + config["desc"]
-			btn.disabled = false
-			btn.modulate = Color(1, 1, 1, 1)
-			btn.pressed.connect(_on_path_selected.bind(id))
-			
-		path_list.add_child(btn)
+		if t > max_tier: max_tier = t
+	
+	# 3. 从上往下 (Tier Max -> Tier 0) 生成 UI 行
+	# 这样在 VBox 里，Tier Max 在上面，Tier 0 在下面，符合“树往上长”的视觉
+	for t in range(max_tier, -1, -1):
+		if not tiers_data.has(t): continue
+		
+		create_tier_row(t, tiers_data[t])
 
-func _on_path_selected(path_id):
-	print("玩家选择了路径: ", path_id)
-	# MVP 阶段：这里可以仅仅打印
-	# 后续：弹出确认框 "确定要致力于这条道路吗？"
+# 创建每一层的行 (HBox)
+func create_tier_row(tier_idx: int, nodes: Array):
+	# A. 创建行容器
+	var row = HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER # 居中对齐
+	row.add_theme_constant_override("separation", 20) # 节点间距
+	tree_container.add_child(row)
+	
+	# (可选) 加个层级标签
+	# var label = Label.new()
+	# label.text = "Tier %d" % tier_idx
+	# tree_container.add_child(label) 
+	
+	# B. 在行里添加节点按钮
+	for node_data in nodes:
+		var btn = create_node_button(node_data)
+		if btn: row.add_child(btn)
+
+# 创建单个节点按钮
+func create_node_button(data: Dictionary) -> Button:
+	var id = data["id"]
+	var status = Global.get_path_status(id)
+	
+	# 如果是完全隐藏，就不生成 (或者生成一个空的占位符保持排版?)
+	# 这里选择直接不生成
+	if status == Global.PathStatus.HIDDEN:
+		return null
+		
+	var btn = Button.new()
+	btn.custom_minimum_size = Vector2(160, 100) # 调大一点，像个卡片
+	btn.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	btn.clip_text = true
+	
+	# --- 样式逻辑 ---
+	match status:
+		Global.PathStatus.BLURRED:
+			btn.text = "???\n(眼界不足)"
+			btn.disabled = true
+			btn.modulate = Color(0.3, 0.3, 0.3, 0.8) # 深灰色
+			
+		Global.PathStatus.LOCKED:
+			btn.text = data["name"] + "\n[已锁死]"
+			btn.disabled = true
+			btn.modulate = Color(0.8, 0.2, 0.2, 0.5) # 红色半透明
+			
+		Global.PathStatus.AVAILABLE:
+			btn.text = "【" + data["name"] + "】\n" + data.get("desc", "")
+			btn.disabled = false
+			btn.modulate = Color(1, 1, 1, 1) # 正常亮
+			# 绑定点击
+			btn.pressed.connect(_on_node_clicked.bind(id))
+			
+		Global.PathStatus.SELECTED:
+			btn.text = "★ " + data["name"] + " ★\n(已点亮)"
+			btn.disabled = true # 选过了就不能再点
+			btn.modulate = Color(1, 0.8, 0.2, 1) # 金色
+			
+	return btn
+
+func _on_node_clicked(id):
+	Global.select_path(id)
+	refresh_forest() # 选完立刻刷新，为了让互斥锁立刻生效

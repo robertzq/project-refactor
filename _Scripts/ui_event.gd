@@ -208,7 +208,7 @@ func apply_stress(val, type):
 		var result = Global.apply_stress(val, type, false)
 		print("结算完毕。当前焦虑:", result.current_anxiety)
 	else:
-		print("⚠️ Global.gd 缺少 apply_stress 函数！模拟扣除...")
+		print("Global.gd 缺少 apply_stress 函数！模拟扣除...")
 		# 模拟逻辑，防止报错卡死
 		if not Global.get("anxiety"): Global.set("anxiety", 0)
 		Global.anxiety += val

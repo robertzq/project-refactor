@@ -1,32 +1,115 @@
 {
-	"path_programmer": {
-		"name": "全栈工程师",
-		"desc": "掌握核心技术，成为赛博时代的建筑师。",
-		"req_entropy": 3
+	"root_striver": {
+		"name": "做题惯性",
+		"desc": "遇到问题，你的第一反应是找标准答案。",
+		"tier": 0,
+		"req_entropy": 0
 	},
-	"path_indie_dev": {
-		"name": "独立开发者",
-		"desc": "不仅要有技术，还要有表达自我的勇气。",
-		"req_entropy": 6
+	"root_heir": {
+		"name": "父辈余荫",
+		"desc": "你以为那是你的能力，其实只是平台的引力。",
+		"tier": 0,
+		"req_entropy": 0,
+		"req_money": 2000
 	},
-	"path_sales": {
-		"name": "金牌销售",
-		"desc": "看透人性的弱点，用话术换取财富。",
-		"req_entropy": 2
+	
+	"node_part_time_bad": {
+		"name": "兼职传单",
+		"desc": "为了明天的饭钱，你穿上了不合身的玩偶服。",
+		"tier": 1,
+		"parent": "root_striver",
+		"req_entropy": 0,
+		"cost_stress": 15,
+		"gain_money": 500
 	},
-	"path_scholar": {
-		"name": "学术深造",
-		"desc": "在象牙塔尖探索人类认知的边界。",
-		"req_entropy": 8
+	"node_english_fast": {
+		"name": "英语快班",
+		"desc": "接触到了更优秀的同龄人，听说了一些出国的事。",
+		"tier": 1,
+		"parent": "root_striver",
+		"req_entropy": 1,
+		"gain_sed": 1,
+		"gain_entropy": 1
 	},
-	"path_crypto": {
-		"name": "Web3 投机者",
-		"desc": "在泡沫中冲浪，这是勇敢者的游戏。",
+	"node_student_union": {
+		"name": "学生会干事",
+		"desc": "以为是积累人脉，其实是免费劳动力。",
+		"tier": 1,
+		"parent": "root_striver",
+		"req_entropy": 0,
+		"cost_stress": 10
+	},
+	
+	"node_code_grind": {
+		"name": "机房死磕",
+		"desc": "孤独的日与夜。你放弃了社交，换来了技术。",
+		"tier": 2,
+		"parent": "root_striver",
+		"req_entropy": 3,
+		"gain_sed": 3,
+		"cost_stress": 30,
+		"gain_progress": 10
+	},
+	"node_scholarship": {
+		"name": "国家奖学金",
+		"desc": "你不仅需要成绩，还需要学会展示（表演）自己。",
+		"tier": 2,
+		"parent": "node_english_fast",
+		"req_entropy": 2,
+		"gain_money": 8000,
+		"gain_pride": 2
+	},
+
+	"choice_lab_slave": {
+		"name": "导师实验室",
+		"desc": "【陷阱】听话、好用。也许能保研，但眼界会停滞。",
+		"tier": 3,
+		"parent": "node_code_grind",
+		"req_entropy": 4,
+		"mutex_group": "junior_choice",
+		"cost_stress": 20,
+		"gain_sed": 2
+	},
+	"choice_big_intern": {
+		"name": "自主实习",
+		"desc": "【觉醒】去外面的世界看看。需要极高的眼界才能发现这条路。",
+		"tier": 3,
+		"parent": "node_code_grind",
+		"req_entropy": 6,
+		"mutex_group": "junior_choice",
+		"gain_entropy": 2,
+		"gain_progress": 20
+	},
+	"choice_ielts": {
+		"name": "雅思备考",
+		"desc": "一条昂贵的路。每一个单词都是金钱的味道。",
+		"tier": 3,
+		"parent": "node_english_fast",
+		"mutex_group": "junior_choice",
+		"cost_money": 3000,
 		"req_entropy": 5
 	},
-	"path_home": {
-		"name": "回乡躺平",
-		"desc": "接受平凡，享受安宁。",
-		"req_entropy": 0
+
+	"end_tech_lead": {
+		"name": "大厂核心",
+		"desc": "【结局】你的名字写在产品的致谢名单里。你证明了自己。",
+		"tier": 4,
+		"parent": "choice_big_intern",
+		"req_progress": 80,
+		"req_sed": 10
+	},
+	"end_grad_student": {
+		"name": "迷茫研究生",
+		"desc": "【结局】虽然上岸了，但你依然不知道未来在哪里。",
+		"tier": 4,
+		"parent": "choice_lab_slave",
+		"req_sed": 5
+	},
+	"end_outlier": {
+		"name": "独立开发者",
+		"desc": "【结局】你没有选择大厂的螺丝钉。你是自由的。",
+		"tier": 4,
+		"parent": "choice_big_intern",
+		"req_entropy": 8
 	}
 }
