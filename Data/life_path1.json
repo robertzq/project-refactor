@@ -1,0 +1,263 @@
+{
+    "root_freshman": {
+        "name": "报到日",
+        "desc": "2015年的夏天。录取通知书上写着'软件工程'。辅导员说这是朝阳行业，但你还没意识到，这行代码将决定你未来十年的运行逻辑。",
+        "tier": 0,
+        "req_entropy": 0,
+        "gain_entropy": 1,
+        "gain_sed": 1,
+        "gain_charm": 1
+    },
+    "node_train_hard": {
+        "name": "军训与早八",
+        "desc": "C语言课在早八点。你是选择去占座听不懂的课，还是回宿舍补觉？这是你对人生资源的第一笔分配。",
+        "tier": 1,
+        "parent": "root_freshman",
+        "location_bind": "DORM",
+        "cost_stress": 15,
+        "gain_sed": 2,
+        "gain_charm": 1,
+        "comment": "通用的起点。高傲骨(Pride)玩家会在这里感到不适。"
+    },
+    "node_project_final_term": {
+        "name": "期末考试周",
+        "desc": "图书馆凌晨的灯光。为了绩点(GPA)而战，你知道保研名额只留给前5%。这是最稳妥，也最拥挤的路。",
+        "tier": 2,
+        "parent": "node_train_hard",
+        "location_bind": "LIB",
+        "cost_stress": 25,
+        "gain_sed": 6,
+        "gain_charm": -1,
+        "comment": "【做题家主线】牺牲魅力，换取高沉淀。"
+    },
+    "node_project_alpha": {
+        "name": "大作业的疯狂",
+        "desc": "编程课的大作业。你是选择随便做做，还是把它做成一个真正的产品？你决定去啃那些枯燥的文档。",
+        "tier": 2,
+        "parent": "node_train_hard",
+        "location_bind": "LAB",
+        "cost_stress": 30,
+        "gain_sed": 5,
+        "gain_entropy": 2,
+        "comment": "【技术线核心】通往硬核技术路线。"
+    },
+    "node_school_out_work": {
+        "name": "兼职赚钱",
+        "desc": "穿上服务员的制服，低下高贵的头颅。虽然身体很累，但这笔生活费是你不再伸手要钱的底气。",
+        "tier": 2,
+        "parent": "node_train_hard",
+        "location_bind": "CAFE",
+        "cost_stress": 20,
+        "gain_money": 1500,
+        "gain_sed": 1,
+        "comment": "【生存线】贫穷陷阱。赚钱虽好，但没空沉淀。"
+    },
+    "node_maid_cafe_parttime": {
+        "name": "二次元兼职/模特",
+        "desc": "你穿上精致的制服。在这里不看绩点，看的是谁能掌控空气。你发现原来靠脸真的能吃饭，而且比写代码容易多了。",
+        "tier": 2,
+        "parent": "node_train_hard",
+        "location_bind": "CAFE",
+        "cost_stress": 5,
+        "gain_money": 3000,
+        "gain_charm": 5,
+        "gain_sed": 0,
+        "comment": "【乌拉线入口】沉淀为0。一旦习惯了赚快钱，就很难回去了。"
+    },
+    "choice_transfer_major": {
+        "name": "转专业/精英班",
+        "desc": "你盯着那个全校最牛的实验班。需要极高的成绩沉淀，和一点点自命不凡的傲气。",
+        "tier": 3,
+        "parent": "node_project_alpha",
+        "req_sed": 12,
+        "req_pride": 7,
+        "mutex_group": "sophomore_tech_choice",
+        "gain_entropy": 4
+    },
+    "choice_intern_big": {
+        "name": "寻找大厂实习",
+        "desc": "你决定去工业界看看。代码不是写在纸上的，是跑在服务器上的。你第一次感受到了996的节奏。",
+        "tier": 3,
+        "parent": "node_project_alpha",
+        "req_sed": 8,
+        "mutex_group": "sophomore_tech_choice",
+        "gain_money": 3000,
+        "gain_entropy": 3,
+        "comment": "【技术线】通往Bosch/Xuan剧情"
+    },
+    "choice_make_self_work": {
+        "name": "毕业就创业",
+        "desc": "你不想打工。你看着中关村创业大街的咖啡凉了又热。心里的躁动按捺不住。",
+        "tier": 3,
+        "parent": "node_project_alpha",
+        "req_entropy": 4,
+        "mutex_group": "sophomore_tech_choice",
+        "cost_money": 1000,
+        "gain_entropy": 3,
+        "comment": "【创业线】通往Hong/Mark剧情"
+    },
+    "choice_streamer_debut": {
+        "name": "尝试直播出道",
+        "desc": "你买了一套声卡和补光灯。第一次面对镜头，你听到了心跳的声音。去他的C++，我要做偶像。",
+        "tier": 3,
+        "parent": "node_maid_cafe_parttime",
+        "req_charm": 6,
+        "gain_money": 2000,
+        "gain_charm": 8,
+        "cost_stress": 40,
+        "comment": "【乌拉线】高压高魅力。数据焦虑开始显现。"
+    },
+    "choice_civil_prep": {
+        "name": "备考公务员/选调",
+        "desc": "你看着往届的录用名单。这是一条千军万马的独木桥，但岸上是“稳定”。你试图寻找一种不会过时的生活。",
+        "tier": 3,
+        "parent": "node_project_final_term",
+        "req_sed": 10,
+        "gain_security": 5,
+        "cost_stress": 20,
+        "comment": "【躺平线前置】"
+    },
+    "choice_ielts": {
+        "name": "雅思托福",
+        "desc": "【高眼界解锁】你透过图书馆的窗户，看到了大洋彼岸。这是一条昂贵但广阔的路。",
+        "tier": 3,
+        "parent": "node_project_final_term",
+        "req_entropy": 5,
+        "mutex_group": "sophomore_academic_choice",
+        "cost_money": 5000,
+        "gain_entropy": 4
+    },
+    "choice_startup_core_wp": {
+        "name": "跟Hong 创业 (WP)",
+        "desc": "决定跟 Hong 做 Windows Phone 开发。他说这是下一个十年的风口。你信了，毕竟他是班长。",
+        "tier": 4,
+        "parent": "choice_make_self_work",
+        "location_bind": "DORM",
+        "gain_money": 1000,
+        "gain_sed": 0,
+        "comment": "【陷阱】有钱无沉淀。你只是他的杠杆。"
+    },
+    "choice_startup_core_game": {
+        "name": "跟Mark 创业 (Indie)",
+        "desc": "决定跟 Mark 做独立游戏。没有工资，只有泡面和梦想。你觉得这才叫活着。",
+        "tier": 4,
+        "parent": "choice_make_self_work",
+        "location_bind": "LAB",
+        "cost_money": 500,
+        "gain_sed": 8,
+        "gain_entropy": 3,
+        "comment": "【理想主义】高沉淀，为分崩离析做铺垫"
+    },
+    "choice_startup_core": {
+        "name": "踏入社会当牛马",
+        "desc": "博世(Bosch)给你发来了邀请。是时候把大厂实习的经验变现了。虽然是外企，但也得卷。",
+        "tier": 4,
+        "parent": "choice_intern_big",
+        "req_sed": 15,
+        "location_bind": "LAB",
+        "gain_money": 8000,
+        "gain_sed": 5,
+        "cost_stress": 40,
+        "comment": "【技术线正途】你的亲身经历"
+    },
+    "choice_fulltime_streamer": {
+        "name": "全职UP主/主播",
+        "desc": "你拒绝了朝九晚五。你的工位是那把粉色的电竞椅。黑粉和真爱粉一样多。",
+        "tier": 4,
+        "parent": "choice_streamer_debut",
+        "req_charm": 15,
+        "gain_money": 15000,
+        "gain_pride": 8,
+        "comment": "【乌拉线高潮】"
+    },
+    "choice_return_hometown": {
+        "name": "回老家上岸",
+        "desc": "朝九晚五，两点一线。父母很满意，你在这个小城里拥有了名字。大城市的喧嚣与你无关了。",
+        "tier": 4,
+        "parent": "choice_civil_prep",
+        "gain_security": 20,
+        "cost_stress": -50,
+        "comment": "【躺平结局】压力清零，这就是你的断舍离。"
+    },
+    "choice_study_abroad": {
+        "name": "拿到Offer(出国)",
+        "desc": "图书馆闭馆时的音乐你听了无数遍。现在，你要去听大本钟的钟声了。",
+        "tier": 4,
+        "parent": "choice_ielts",
+        "req_sed": 20,
+        "location_bind": "LIB"
+    },
+    "hong_target_sale": {
+        "name": "资本的杠杆",
+        "desc": "Hong 看着下滑的数据并不慌张。他私下跟你说：'做产品不是为了改变世界，是为了被巨头收购。' 原来你只是他的筹码。",
+        "tier": 5,
+        "parent": "choice_startup_core_wp",
+        "location_bind": "LAB",
+        "gain_money": 8000,
+        "gain_sed": 2,
+        "comment": "【Hong结局】"
+    },
+    "back_to_society": {
+        "name": "分崩离析",
+        "desc": "游戏火了，团队散了。Xuan 私藏公章被逐出，兄弟情谊荡然无存。你看着沉默的 Mark，怀疑这是否也是一种计算。",
+        "tier": 5,
+        "parent": "choice_startup_core_game",
+        "location_bind": "LAB",
+        "cost_stress": 50,
+        "gain_sed": 10,
+        "comment": "【Mark结局】理想主义的代价"
+    },
+    "b_core_seninor_dev": {
+        "name": "B家核心技术大佬",
+        "desc": "你没有高学历，但你解决了最难的Bug。连研究生都来请教你。你证明了'沉淀'比'Title'更重要。",
+        "tier": 5,
+        "parent": "choice_startup_core",
+        "req_sed": 40,
+        "location_bind": "LAB",
+        "gain_money": 6000,
+        "gain_security": 5,
+        "gain_pride": 5,
+        "comment": "【技术逆袭】"
+    },
+    "choice_study_abroad_find_work": {
+        "name": "海归求职",
+        "desc": "国外镀金结束。回国后发现，HR 好像不怎么认这个学校了。海归变海带。",
+        "tier": 5,
+        "parent": "choice_study_abroad",
+        "location_bind": "LAB",
+        "gain_sed": 2,
+        "cost_stress": 20
+    },
+    "end_top_influencer": {
+        "name": "结局：顶流的代价",
+        "desc": "你拒绝了朝九晚五。你的工位是那把粉色的电竞椅。黑粉和真爱粉一样多，你开始习惯在深夜失眠。",
+        "tier": 5,
+        "parent": "choice_fulltime_streamer",
+        "req_charm": 30,
+        "req_pride": 8,
+        "comment": "【乌拉线结局】"
+    },
+    "big_amount_interview": {
+        "name": "海投找Offer",
+        "desc": "学历只是敲门砖。你在面试室推门进去，发现面试官是当年的老同学。",
+        "tier": 6,
+        "parent": "choice_study_abroad_find_work",
+        "req_sed": 10,
+        "location_bind": "LAB",
+        "cost_stress": 30,
+        "gain_money": 3000,
+        "comment": "【海归尴尬结局】"
+    },
+    "b_core_staff_dev": {
+        "name": "B家 Tech Lead",
+        "desc": "你开始带团队了。你面试了一个同济的硕士，但他好像只会背八股文。你叹了口气，想起了当年的自己。",
+        "tier": 6,
+        "parent": "b_core_seninor_dev",
+        "req_sed": 60,
+        "location_bind": "LAB",
+        "gain_money": 10000,
+        "gain_security": 10,
+        "gain_pride": 10,
+        "comment": "【沉淀流真结局】"
+    }
+}

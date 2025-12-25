@@ -9,3 +9,12 @@ EVT_201,奖学金的秘密,听说 Xuan 拿到了贫困生助学金，但他脚�
 EVT_202,校花的诱惑,校花给你介绍兼职：“帮忙刷几个单，动动手指就赚200。”,dorm_enter,WORK,这钱我赚了|感觉是陷阱,money:200;trait:投机者;work:true,pride:1;progress:5
 EVT_204,死锁的二叉树,数据结构作业太难了。看着屏幕上的报错，感觉像个跳不出的循环。,lib_enter,STUDY,死磕到底|抄室友作业,stress:25:WORK;progress:5;sed:1,progress:2;stress:5:GEN
 EVT_302,父亲的电话,父亲声音支吾：“最近手头有点紧，下个月生活费能不能晚几天……”,dorm_enter,EGO,安慰父亲|表示不满,stress:20:EGO,stress:10:EGO;pride:-1
+EVT_INTRO_HONG,热情的班长,新生报到。班长 Hong 满头大汗地帮你搬行李，熟练地告诉你去哪领军训服。他笑着说：“大家都是兄弟，有事找我。”,dorm_enter,GEN,叫声大哥|保持距离,stress:-5;entropy:-1:GEN,stress:0;sed:1:GEN
+EVT_BUY_COMPUTER,生产力工具,大作业开始了。实验室里大家都在讨论换电脑。有人提议团购顶配 MacBook Pro，有人默默拿出了老旧的 ThinkPad。,lab_enter,MONEY,跟风团购(消耗金钱)|坚守旧电脑(消耗傲骨),money:-12000;pride:5;sed:2:WORK,pride:-5;sed:1;stress:10:EGO
+EVT_MEET_XUAN_LAB,大作业的分歧,Xuan 坐在实验室C位，指挥着几个人帮他写代码。他看到你，随口说：“这种作业随便搞搞就行了，重点是用来包装简历。”,lab_enter,GEN,认同他的观点|坚持自己写,entropy:1;progress:5;sed:0:WORK,sed:5;progress:2;stress:10:WORK
+EVT_MEET_MARK_LAB,角落的极客,你在调试大作业代码时，发现旁边的 Mark 学长正在用同一个库，但他的写法极其优雅。他似乎在做一个并非作业的东西。,lab_enter,STUDY,请教代码|默默观察,progress:10;sed:2:WORK,entropy:2;sed:1:GEN
+EVT_LIB_ZHANG,团支书的笔记,你在图书馆刷四六级真题。Zhang 抱着一摞书坐在你对面：“雅思词汇太难了，能不能借你的六级笔记看看？”,lib_enter,GEN,交换笔记|婉拒,sed:3;relation_zhang:10:STUDY,stress:-5:GEN
+EVT_XUAN_DINNER,消失的红烧肉,导师请核心团队去家里吃饭。那盘老师特意做的红烧肉，Xuan 一筷子接一筷子，竟然一个人全吃光了。老师尴尬地笑了笑。,cafe_enter,EGO,提醒他|尴尬沉默,pride:-2;stress:5:EGO,stress:15:GEN
+EVT_XUAN_100,一百元的挽回,你决定退出团队。手机震动，Xuan 转来 ¥100.00。备注写着：“希望能挽回。大家还是兄弟。”你看着屏幕，这 100 块钱像一记耳光。,dorm_enter,EGO,收下钱|退回并拉黑,money:100;pride:-10;trait:从众者:EGO,pride:10;sed:5;stress:-20:EGO
+EVT_LU_CRY,99分的崩溃,走廊里传来哭声。学霸 Lu 手里捏着高数试卷，哭得喘不上气：“我期中考了100，这次才99...” 旁边来安慰她的学渣 Zhe 听完，表情从同情变成了想死。,dorm_enter,GEN,安慰Lu|心疼Zhe,stress:20;sed:1:GEN,stress:-10;pride:2:EGO
+EVT_SCENE_WAIT,深夜炒面,校门口的路边摊。老板娘多给你加了一个蛋：“大学生不容易啊。”这可能是这一周你感受到的唯一的温暖。,cafe_enter,GEN,大口吃完|在那发呆,stress:-10:GEN,stress:0:GEN
