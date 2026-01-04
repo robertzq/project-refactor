@@ -1,25 +1,82 @@
-[gd_scene load_steps=8 format=3 uid="uid://d3hvkomi6qf3v"]
+[gd_scene load_steps=14 format=3 uid="uid://d3hvkomi6qf3v"]
 
 [ext_resource type="Script" uid="uid://ddtw3thd0ujy5" path="res://player.gd" id="1_k40lu"]
-[ext_resource type="Texture2D" uid="uid://cbp5ddspqr2t" path="res://_Assets/Idle.png" id="1_l4qae"]
+[ext_resource type="Texture2D" uid="uid://b68pwqnp0qeeu" path="res://_Scenes/Characters/rpgPlayer.png" id="2_k40lu"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_k40lu"]
 radius = 0.19580078
-height = 0.9067383
+height = 0.6134033
 
 [sub_resource type="Animation" id="Animation_yaur6"]
 length = 0.001
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Sprite3D:frame")
+tracks/0/path = NodePath("Sprite3D:frame_coords")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
 "times": PackedFloat32Array(0),
 "transitions": PackedFloat32Array(1),
 "update": 1,
-"values": [0]
+"values": [Vector2i(0, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_l4qae"]
+resource_name = "walk"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite3D:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0.006938895, 0.25, 0.5, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_wured"]
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite3D:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.5, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_uc1x7"]
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite3D:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.5, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2)]
+}
+
+[sub_resource type="Animation" id="Animation_y6kcb"]
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite3D:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.5, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3), Vector2i(3, 3)]
 }
 
 [sub_resource type="Animation" id="Animation_k40lu"]
@@ -29,43 +86,76 @@ loop_mode = 1
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Sprite3D:frame")
+tracks/0/path = NodePath("Sprite3D:frame_coords")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.099842936, 0.20172349, 0.2995288, 0.40140936, 0.5012523),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
 "update": 1,
-"values": [0, 1, 2, 3, 4, 5]
+"values": [Vector2i(0, 0)]
 }
 
-[sub_resource type="Animation" id="Animation_l4qae"]
-resource_name = "walk"
+[sub_resource type="Animation" id="Animation_trv1g"]
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Sprite3D:frame")
+tracks/0/path = NodePath("Sprite3D:frame_coords")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.099842936, 0.19968587, 0.30767927, 0.40344697, 0.49310187, 0.59702003, 0.6989006, 0.80078113, 0.9067369),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
 "update": 1,
-"values": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+"values": [Vector2i(1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_ij7sn"]
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite3D:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [Vector2i(2, 2)]
+}
+
+[sub_resource type="Animation" id="Animation_7vg7s"]
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite3D:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [Vector2i(3, 3)]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_wured"]
 _data = {
 &"RESET": SubResource("Animation_yaur6"),
-&"idle": SubResource("Animation_k40lu"),
-&"walk": SubResource("Animation_l4qae")
+&"idle_down": SubResource("Animation_k40lu"),
+&"idle_left": SubResource("Animation_trv1g"),
+&"idle_right": SubResource("Animation_ij7sn"),
+&"idle_up": SubResource("Animation_7vg7s"),
+&"walk_down": SubResource("Animation_l4qae"),
+&"walk_left": SubResource("Animation_wured"),
+&"walk_right": SubResource("Animation_uc1x7"),
+&"walk_up": SubResource("Animation_y6kcb")
 }
 
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1_k40lu")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2854004, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.024407744, 0)
 shape = SubResource("CapsuleShape3D_k40lu")
 
 [node name="Camera3D" type="Camera3D" parent="."]
@@ -77,8 +167,10 @@ libraries = {
 
 [node name="Sprite3D" type="Sprite3D" parent="."]
 billboard = 2
-texture = ExtResource("1_l4qae")
-hframes = 6
+texture_filter = 0
+texture = ExtResource("2_k40lu")
+hframes = 4
+vframes = 4
 
 [node name="RayCast3D" type="RayCast3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.13250136, 0)
