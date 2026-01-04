@@ -29,8 +29,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7528887, 1.6899992, 0.1236
 
 [node name="Camera3D2" type="Camera3D" parent="Player"]
 transform = Transform3D(1, 0, 0, 0, 0.7071068, 0.7071068, 0, -0.7071068, 0.7071068, 0.7528887, 8.31, 9.876343)
-projection = 1
 current = true
+fov = 30.0
 size = 10.0
 
 [node name="building_lib" parent="." groups=["buildings"] instance=ExtResource("3_e2qk1")]
