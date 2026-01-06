@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://dxc4kb3dx6kg5"]
+[gd_scene load_steps=13 format=3 uid="uid://dxc4kb3dx6kg5"]
 
 [ext_resource type="MeshLibrary" uid="uid://bjgvhnvl7dm6b" path="res://my_tiles.tres" id="1_0wt7h"]
 [ext_resource type="Script" uid="uid://jwuidsopn8jt" path="res://_Scripts/main_world.gd" id="1_pt4xt"]
@@ -7,8 +7,15 @@
 [ext_resource type="PackedScene" uid="uid://tv4cm1lv1vpr" path="res://_Scenes/Building_Lib.tscn" id="3_e2qk1"]
 [ext_resource type="Script" uid="uid://cjycr0ihfhca4" path="res://_Scripts/UI_LifePath.gd" id="3_e4xpx"]
 [ext_resource type="PackedScene" uid="uid://drny7bgdvsesv" path="res://_Scenes/Building_Dorm.tscn" id="4_b4a7i"]
+[ext_resource type="Script" uid="uid://bi5d8f3gh05cu" path="res://_Scenes/camera_3d_2.gd" id="6_rtyws"]
 [ext_resource type="PackedScene" uid="uid://dr5mmjbw58np1" path="res://_Scenes/UI_Event.tscn" id="6_ugwwi"]
 [ext_resource type="Script" uid="uid://cdxu1tvbqnx32" path="res://_Scripts/Managers/GameManager.gd" id="8_kir0c"]
+
+[sub_resource type="Environment" id="Environment_e4xpx"]
+
+[sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_rtyws"]
+dof_blur_far_enabled = true
+dof_blur_near_enabled = true
 
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_pt4xt")
@@ -28,10 +35,11 @@ metadata/_editor_floor_ = Vector3(0, 0, 0)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7528887, 1.6899992, 0.12365723)
 
 [node name="Camera3D2" type="Camera3D" parent="Player"]
-transform = Transform3D(1, 0, 0, 0, 0.7071068, 0.7071068, 0, -0.7071068, 0.7071068, 0.7528887, 8.31, 9.876343)
+transform = Transform3D(1, 0, 0, 0, 0.7071068, 0.7071068, 0, -0.7071068, 0.7071068, 0.753, 8.31, 9.876)
 current = true
 fov = 30.0
 size = 10.0
+script = ExtResource("6_rtyws")
 
 [node name="building_lib" parent="." groups=["buildings"] instance=ExtResource("3_e2qk1")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9713726, 1.0500002, 1.9964867)
@@ -48,3 +56,7 @@ unique_name_in_owner = true
 
 [node name="GameManager" type="Node3D" parent="."]
 script = ExtResource("8_kir0c")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_e4xpx")
+camera_attributes = SubResource("CameraAttributesPractical_rtyws")
