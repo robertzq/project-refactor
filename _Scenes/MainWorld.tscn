@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://dxc4kb3dx6kg5"]
+[gd_scene load_steps=24 format=3 uid="uid://dxc4kb3dx6kg5"]
 
 [ext_resource type="MeshLibrary" uid="uid://bjgvhnvl7dm6b" path="res://my_tiles.tres" id="1_0wt7h"]
 [ext_resource type="Script" uid="uid://jwuidsopn8jt" path="res://_Scripts/main_world.gd" id="1_pt4xt"]
@@ -11,6 +11,8 @@
 [ext_resource type="PackedScene" uid="uid://dr5mmjbw58np1" path="res://_Scenes/UI_Event.tscn" id="6_ugwwi"]
 [ext_resource type="Script" uid="uid://cdxu1tvbqnx32" path="res://_Scripts/Managers/GameManager.gd" id="8_kir0c"]
 [ext_resource type="PackedScene" uid="uid://dhtnfx12h2s3k" path="res://_Assets/kaykit_city_builder_bits/Assets/gltf/building_B.gltf" id="11_qbear"]
+[ext_resource type="PackedScene" uid="uid://c83sfcu4oqamk" path="res://_Assets/kaykit_city_builder_bits/Assets/gltf/building_A.gltf" id="12_pldw2"]
+[ext_resource type="FontFile" uid="uid://cuxdp8tbmo8xs" path="res://_Assets/Art/msyh.ttf" id="13_3ls43"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qbear"]
 albedo_color = Color(0.959454, 0.75804514, 0.36690503, 1)
@@ -18,6 +20,7 @@ albedo_color = Color(0.959454, 0.75804514, 0.36690503, 1)
 [sub_resource type="TextMesh" id="TextMesh_pldw2"]
 material = SubResource("StandardMaterial3D_qbear")
 text = "图书馆"
+font = ExtResource("13_3ls43")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rtyws"]
 albedo_color = Color(0.9607843, 0.75686276, 0.36862746, 1)
@@ -25,6 +28,7 @@ albedo_color = Color(0.9607843, 0.75686276, 0.36862746, 1)
 [sub_resource type="TextMesh" id="TextMesh_qbear"]
 material = SubResource("StandardMaterial3D_rtyws")
 text = "37幢"
+font = ExtResource("13_3ls43")
 
 [sub_resource type="Environment" id="Environment_e4xpx"]
 
@@ -40,6 +44,14 @@ albedo_color = Color(0.9607843, 0.75686276, 0.36862746, 1)
 [sub_resource type="TextMesh" id="TextMesh_3ls43"]
 material = SubResource("StandardMaterial3D_pldw2")
 text = "计算机实验室"
+font = ExtResource("13_3ls43")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3ls43"]
+
+[sub_resource type="TextMesh" id="TextMesh_cyiwf"]
+material = SubResource("StandardMaterial3D_3ls43")
+text = "食堂"
+font = ExtResource("13_3ls43")
 
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_pt4xt")
@@ -107,3 +119,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8461268, 1.1584663)
 [node name="MeshInstance3D" type="MeshInstance3D" parent="building_compute/Node3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.23809671, -0.36963367)
 mesh = SubResource("TextMesh_3ls43")
+
+[node name="building_A2" parent="." instance=ExtResource("12_pldw2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.029327, 1.1269968, -4.968185)
+
+[node name="Node3D" type="Node3D" parent="building_A2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 1)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="building_A2/Node3D"]
+mesh = SubResource("TextMesh_cyiwf")
