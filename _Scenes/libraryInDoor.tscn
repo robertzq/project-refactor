@@ -3,7 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://cot1vhlk0fkrr" path="res://_Assets/librarybg.png" id="1_a8l3a"]
 [ext_resource type="Script" uid="uid://da5w0qf5fcf8y" path="res://_Scripts/library_in_door.gd" id="1_emuvi"]
 
-[node name="Node2D" type="Control"]
+[node name="Control" type="Control"]
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_emuvi")
@@ -19,219 +19,257 @@ anchors_preset = 0
 offset_right = 3222.0
 offset_bottom = 1778.0
 
-[node name="seat_31" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_31" type="TextureButton" parent="TextureRect/Seats_Container" groups=["normal_seats"]]
 layout_mode = 0
 offset_left = 102.0
 offset_top = 840.0
 offset_right = 220.0
 offset_bottom = 910.0
 
-[node name="seat_30" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_30" type="TextureButton" parent="TextureRect/Seats_Container" groups=["normal_seats"]]
 layout_mode = 0
 offset_left = 262.0
 offset_top = 924.0
 offset_right = 380.0
 offset_bottom = 994.0
 
-[node name="seat_29" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_29" type="TextureButton" parent="TextureRect/Seats_Container" groups=["normal_seats"]]
 layout_mode = 0
 offset_left = 415.0
 offset_top = 1007.0
 offset_right = 533.0
 offset_bottom = 1077.0
 
-[node name="seat_28" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_28" type="TextureButton" parent="TextureRect/Seats_Container" groups=["normal_seats"]]
 layout_mode = 0
 offset_left = 584.0
 offset_top = 1091.0
 offset_right = 702.0
 offset_bottom = 1161.0
 
-[node name="seat_27" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_27" type="TextureButton" parent="TextureRect/Seats_Container" groups=["normal_seats"]]
 layout_mode = 0
 offset_left = 730.0
 offset_top = 1160.0
 offset_right = 848.0
 offset_bottom = 1230.0
 
-[node name="seat_26" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_26" type="TextureButton" parent="TextureRect/Seats_Container" groups=["normal_seats"]]
 layout_mode = 0
 offset_left = 901.0
 offset_top = 1250.0
 offset_right = 1019.0
 offset_bottom = 1320.0
 
-[node name="seat_25" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_25" type="TextureButton" parent="TextureRect/Seats_Container" groups=["normal_seats"]]
 layout_mode = 0
 offset_left = 1077.0
 offset_top = 1333.0
 offset_right = 1195.0
 offset_bottom = 1403.0
 
-[node name="seat_24" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_24" type="TextureButton" parent="TextureRect/Seats_Container" groups=["corner_seats"]]
 layout_mode = 0
 offset_left = 1248.0
 offset_top = 1427.0
 offset_right = 1366.0
 offset_bottom = 1497.0
 
-[node name="seat_23" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_23" type="TextureButton" parent="TextureRect/Seats_Container" groups=["corner_seats"]]
 layout_mode = 0
 offset_left = 1446.0
 offset_top = 1519.0
 offset_right = 1564.0
 offset_bottom = 1589.0
 
-[node name="seat_22" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_22" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 206.0
 offset_top = 708.0
 offset_right = 324.0
 offset_bottom = 778.0
 
-[node name="seat_21" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_21" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 363.0
 offset_top = 627.0
 offset_right = 481.0
 offset_bottom = 697.0
 
-[node name="seat_20" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_20" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 518.0
 offset_top = 543.0
 offset_right = 636.0
 offset_bottom = 613.0
 
-[node name="seat_19" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_19" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 689.0
 offset_top = 459.0
 offset_right = 807.0
 offset_bottom = 529.0
 
-[node name="seat_18" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_18" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 846.0
 offset_top = 378.0
 offset_right = 964.0
 offset_bottom = 448.0
 
-[node name="seat_17" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_17" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 1005.0
 offset_top = 299.0
 offset_right = 1123.0
 offset_bottom = 369.0
 
-[node name="seat_16" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_16" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 1153.0
 offset_top = 211.0
 offset_right = 1271.0
 offset_bottom = 281.0
 
-[node name="seat_15" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_15" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 1316.0
 offset_top = 134.0
 offset_right = 1434.0
 offset_bottom = 204.0
 
-[node name="seat_14" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_14" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 1525.0
 offset_top = 48.0
 offset_right = 1643.0
 offset_bottom = 118.0
 
-[node name="seat_13" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_13" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 1769.0
 offset_top = 140.0
 offset_right = 1887.0
 offset_bottom = 210.0
 
-[node name="seat_12" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_12" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 1924.0
 offset_top = 221.0
 offset_right = 2042.0
 offset_bottom = 291.0
 
-[node name="seat_11" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_11" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 2093.0
 offset_top = 307.0
 offset_right = 2211.0
 offset_bottom = 377.0
 
-[node name="seat_10" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_10" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 2258.0
 offset_top = 388.0
 offset_right = 2376.0
 offset_bottom = 458.0
 
-[node name="seat_9" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_9" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 2417.0
 offset_top = 469.0
 offset_right = 2535.0
 offset_bottom = 539.0
 
-[node name="seat_8" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_8" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 2569.0
 offset_top = 555.0
 offset_right = 2687.0
 offset_bottom = 625.0
 
-[node name="seat_7" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_7" type="TextureButton" parent="TextureRect/Seats_Container" groups=["window_seats"]]
 layout_mode = 0
 offset_left = 2719.0
 offset_top = 639.0
 offset_right = 2837.0
 offset_bottom = 709.0
 
-[node name="seat_6" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_6" type="TextureButton" parent="TextureRect/Seats_Container" groups=["normal_seats"]]
 layout_mode = 0
 offset_left = 2552.0
 offset_top = 1120.0
 offset_right = 2670.0
 offset_bottom = 1190.0
 
-[node name="seat_5" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_5" type="TextureButton" parent="TextureRect/Seats_Container" groups=["normal_seats"]]
 layout_mode = 0
 offset_left = 2721.0
 offset_top = 1036.0
 offset_right = 2839.0
 offset_bottom = 1106.0
 
-[node name="seat_4" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_4" type="TextureButton" parent="TextureRect/Seats_Container" groups=["normal_seats"]]
 layout_mode = 0
 offset_left = 2368.0
 offset_top = 1216.0
 offset_right = 2486.0
 offset_bottom = 1286.0
 
-[node name="seat_3" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_3" type="TextureButton" parent="TextureRect/Seats_Container" groups=["normal_seats"]]
 layout_mode = 0
 offset_left = 2140.0
 offset_top = 1331.0
 offset_right = 2258.0
 offset_bottom = 1401.0
 
-[node name="seat_2" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="seat_2" type="TextureButton" parent="TextureRect/Seats_Container" groups=["corner_seats"]]
 layout_mode = 0
 offset_left = 1950.0
 offset_top = 1423.0
 offset_right = 2068.0
 offset_bottom = 1493.0
 
-[node name="TextureButton31" type="TextureButton" parent="TextureRect/Seats_Container"]
+[node name="TextureButton31" type="TextureButton" parent="TextureRect/Seats_Container" groups=["corner_seats"]]
 layout_mode = 0
 offset_left = 1768.0
 offset_top = 1525.0
 offset_right = 1886.0
 offset_bottom = 1595.0
+
+[node name="ConfirmPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_right = 1342.0
+offset_bottom = 646.0
+
+[node name="InfoLabel" type="Label" parent="ConfirmPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="ConfirmBtn" type="Button" parent="ConfirmPanel"]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0
+text = "确认选座"
+
+[node name="ResultPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_top = 1119.0
+offset_right = 1346.0
+offset_bottom = 1771.0
+
+[node name="LogLabel" type="Label" parent="ResultPanel"]
+layout_mode = 0
+offset_right = 1337.0
+offset_bottom = 268.0
+
+[node name="StartBtn" type="Button" parent="ResultPanel"]
+layout_mode = 0
+offset_left = -2.0
+offset_top = 525.0
+offset_right = 335.0
+offset_bottom = 651.0
+text = "开始学习"
+
+[connection signal="pressed" from="ConfirmPanel/ConfirmBtn" to="." method="_on_confirm_occupy_pressed"]
+[connection signal="pressed" from="ResultPanel/StartBtn" to="." method="_on_start_action_pressed"]

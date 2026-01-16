@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://dxc4kb3dx6kg5"]
+[gd_scene load_steps=25 format=3 uid="uid://dxc4kb3dx6kg5"]
 
 [ext_resource type="MeshLibrary" uid="uid://bjgvhnvl7dm6b" path="res://my_tiles.tres" id="1_0wt7h"]
 [ext_resource type="Script" uid="uid://jwuidsopn8jt" path="res://_Scripts/main_world.gd" id="1_pt4xt"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://bi5d8f3gh05cu" path="res://_Scripts/camera_3d_2.gd" id="6_rtyws"]
 [ext_resource type="PackedScene" uid="uid://dr5mmjbw58np1" path="res://_Scenes/UI_Event.tscn" id="6_ugwwi"]
 [ext_resource type="Script" uid="uid://cdxu1tvbqnx32" path="res://_Scripts/Managers/GameManager.gd" id="8_kir0c"]
+[ext_resource type="PackedScene" uid="uid://cbgu1iaoxj2np" path="res://_Scenes/libraryInDoor.tscn" id="11_cyiwf"]
 [ext_resource type="PackedScene" uid="uid://dhtnfx12h2s3k" path="res://_Assets/kaykit_city_builder_bits/Assets/gltf/building_B.gltf" id="11_qbear"]
 [ext_resource type="PackedScene" uid="uid://c83sfcu4oqamk" path="res://_Assets/kaykit_city_builder_bits/Assets/gltf/building_A.gltf" id="12_pldw2"]
 [ext_resource type="FontFile" uid="uid://cuxdp8tbmo8xs" path="res://_Assets/Art/msyh.ttf" id="13_3ls43"]
@@ -102,6 +103,8 @@ shadow_enabled = true
 
 [node name="UI_Event" parent="." instance=ExtResource("6_ugwwi")]
 unique_name_in_owner = true
+
+[node name="LibraryView" parent="." instance=ExtResource("11_cyiwf")]
 
 [node name="GameManager" type="Node3D" parent="."]
 script = ExtResource("8_kir0c")

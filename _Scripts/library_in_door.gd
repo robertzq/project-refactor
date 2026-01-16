@@ -1,92 +1,173 @@
 extends Control
 
-signal seat_confirmed(seat_data)
+# --- 信号：将座位数据 + 随机事件数据 打包发回主场景 ---
+signal session_started(seat_data, random_event)
 
-# 定义座位类型的数据字典
+# --- 核心数据配置 ---
 const SEAT_TYPES = {
 	"WINDOW": {
-		"desc": "【靠窗黄金位】\n阳光很好，但也容易看着窗外发呆。\n(心情恢复↑，专注度波动)",
-		"effect": {"mood": 5, "focus_risk": 0.2}
+		"name": "靠窗景观位",
+		"desc": "阳光很好，但也容易看着窗外发呆。\n[效果]: 效率 x1.3 | 专注风险 ↑",
+		"stats": {"eff_mod": 1.3, "stress_fix": 0, "distraction_chance": 0.25}
 	},
 	"CORNER": {
-		"desc": "【死角面壁位】\n没有人会从你身后经过，极致的孤独。\n(专注度↑↑，心情恢复↓)",
-		"effect": {"mood": -2, "focus_bonus": 1.2}
-	},
-	"PILLAR": {
-		"desc": "【柱子后】\n视野受阻，但很有安全感。\n(焦虑降低↑)",
-		"effect": {"anxiety_reduce": 10}
+		"name": "角落幽闭位",
+		"desc": "没有人会从你身后经过，极致的孤独。\n[效果]: 效率 x1.15 | 基础压力 +5",
+		"stats": {"eff_mod": 1.15, "stress_fix": 5, "distraction_chance": 0.0}
 	},
 	"NORMAL": {
-		"desc": "【普通座位】\n普普通通，就像你的人生。\n(无特殊加成)",
-		"effect": {}
+		"name": "普通阅览位",
+		"desc": "普普通通，就像你的人生。\n[效果]: 标准效率 | 无特殊加成",
+		"stats": {"eff_mod": 1.0, "stress_fix": 0, "distraction_chance": 0.1}
 	}
 }
 
-@onready var map_bg = $TextureRect
-@onready var info_label = $Panel/Label
-@onready var confirm_btn = $Panel/Button
+# --- 随机氛围事件库 (你提供的) ---
+var ATMOSPHERE_EVENTS = [
+	{
+		"id": "PEER_PRESSURE",
+		"cond": func(): return Global.pride > 5, 
+		"text": "你看到对面座位的书堆得像山一样，而你才刚翻开第一页。",
+		"effect": {"stress": 10}
+	},
+	{
+		"id": "RICH_GADGET",
+		"cond": func(): return Global.fin_security < 3,
+		"text": "旁边的同学拿出了最新的 iPad Pro 和 Apple Pencil，你默默把草稿纸往回缩了缩。",
+		"effect": {"pride": -1, "stress": 5}
+	},
+	{
+		"id": "FLOW_STATE",
+		"cond": func(): return Global.base_exec > 1.1,
+		"text": "刚坐下，你就闻到了旧书特有的香草味，心情意外地平静。",
+		"effect": {"stress": -15}
+	},
+	{
+		"id": "COUPLE_DISTRACT",
+		"cond": func(): return true, 
+		"text": "斜前方有一对情侣在窃窃私语，虽然声音很小，但很刺耳。",
+		"effect": {"stress": 5}
+	},
+	{
+		"id": "EMPTY_MIND",
+		"cond": func(): return true,
+		"text": "今天图书馆人不多，空气中弥漫着一种适合睡觉的慵懒感。",
+		"effect": {"stress": -5}
+	}
+]
 
-var current_selected_seat = null
+# --- 节点引用 (根据你的描述调整) ---
+@onready var seats_container = $TextureRect/Seats_Container
+# 假设你有一个确认面板 (Panel)
+@onready var confirm_panel = $ConfirmPanel
+@onready var seat_info_label = $ConfirmPanel/InfoLabel
+@onready var confirm_seat_btn = $ConfirmPanel/ConfirmBtn
+# 假设底部有一个结果展示面板 (Panel)
+@onready var result_panel = $ResultPanel
+@onready var result_log_label = $ResultPanel/LogLabel
+@onready var start_action_btn = $ResultPanel/StartBtn
+
+var current_selected_seat_btn = null
+var current_seat_type_key = ""
+var final_seat_data = {}
+var final_event_data = {}
 
 func _ready():
-	# 初始化：连接所有座位的点击信号
-	for seat in map_bg.get_children():
-		if seat is TextureButton:
-			# 假设你在编辑器里给按钮命名为 "Seat_Window_1", "Seat_Corner_2"
-			# 或者我们可以利用 Godot 的 Meta 数据，或者简单的命名规则
-			seat.pressed.connect(func(): _on_seat_clicked(seat))
-
-func setup(building_id):
-	show()
-	info_label.text = "请选择一个空座位..."
-	confirm_btn.disabled = true
-	current_selected_seat = null
+	# 1. 隐藏弹窗
+	confirm_panel.hide()
+	result_panel.hide()
 	
-	# --- 核心玩法：随机占座 (幸存者偏差) ---
-	# 每次进来，随机让 30%-50% 的座位变“有人”
-	for seat in map_bg.get_children():
+	# 2. 连接所有座位的信号
+	for seat in seats_container.get_children():
 		if seat is TextureButton:
-			var is_taken = randf() < 0.4 # 40% 概率被占
-			seat.disabled = is_taken
-			if is_taken:
-				seat.modulate = Color(0.5, 0.5, 0.5) # 变灰，或者换成“书堆”图片
-				# seat.texture_normal = load("res://Assets/seat_books.png") 
-			else:
-				seat.modulate = Color(1, 1, 1) # 恢复亮色
+			# 绑定点击事件，把按钮本身传进去
+			seat.pressed.connect(_on_seat_clicked.bind(seat))
+	
+	# 3. 初始化占座情况 (可选：随机把一些座位变灰)
+	_randomize_occupancy()
 
+func _randomize_occupancy():
+	for seat in seats_container.get_children():
+		if seat is TextureButton:
+			# 30% 概率被占
+			if randf() < 0.3:
+				seat.disabled = true
+				seat.modulate = Color(0.5, 0.5, 0.5) # 变灰
+
+# --- 第一步：点击座位，弹出确认框 ---
 func _on_seat_clicked(seat_btn: TextureButton):
-	current_selected_seat = seat_btn
+	current_selected_seat_btn = seat_btn
 	
-	# 1. 解析座位类型 (通过名字判断，最简单)
-	var type = "NORMAL"
-	if "Window" in seat_btn.name:
-		type = "WINDOW"
-	elif "Corner" in seat_btn.name:
-		type = "CORNER"
-	elif "Pillar" in seat_btn.name:
-		type = "PILLAR"
+	# 核心修改：使用 Groups 判断类型
+	if seat_btn.is_in_group("window_seats"):
+		current_seat_type_key = "WINDOW"
+	elif seat_btn.is_in_group("corner_seats"):
+		current_seat_type_key = "CORNER"
+	else:
+		current_seat_type_key = "NORMAL" # 默认为普通
 		
-	# 2. 更新 UI 描述
-	var data = SEAT_TYPES[type]
-	info_label.text = data["desc"]
-	confirm_btn.disabled = false
+	# 更新 UI
+	var data = SEAT_TYPES[current_seat_type_key]
+	seat_info_label.text = "[b]%s[/b]\n%s" % [data.name, data.desc]
 	
-	# 3. 视觉反馈 (例如给选中的椅子加个框，这里先简化)
-	print("选中了: ", type)
+	# 显示确认框，隐藏之前的逻辑
+	confirm_panel.show()
+	result_panel.hide()
 
-# 确认按钮点击
-func _on_confirm_pressed():
-	if current_selected_seat:
-		hide()
-		# 发送信号，把座位的效果传出去，给 MainWorld 结算
-		# 这里重新解析一次类型，或者存个变量都行
-		var type = "NORMAL"
-		if "Window" in current_selected_seat.name: type = "WINDOW"
-		elif "Corner" in current_selected_seat.name: type = "CORNER"
-		elif "Pillar" in current_selected_seat.name: type = "PILLAR"
+# --- 第二步：确认占座，计算随机事件，显示底部结果 ---
+# 绑定到 ConfirmPanel 里的 "确认占座" 按钮
+func _on_confirm_occupy_pressed():
+	confirm_panel.hide()
+	
+	# 1. 锁定数据
+	final_seat_data = SEAT_TYPES[current_seat_type_key]
+	
+	# 2. 抽取随机事件
+	final_event_data = _pick_random_event()
+	
+	# 3. 在底部面板显示结果
+	result_panel.show()
+	
+	var log_text = "你选择了 [color=yellow]%s[/color]。\n" % final_seat_data.name
+	log_text += "----------------\n"
+	log_text += final_event_data.text + "\n"
+	
+	# 显示属性变化提示 (可选)
+	var eff = final_event_data.effect
+	if "stress" in eff:
+		var sign_str = "+" if eff.stress > 0 else ""
+		log_text += "[color=red](压力 %s%d)[/color] " % [sign_str, eff.stress]
+	if "pride" in eff:
+		log_text += "[color=cyan](自尊 %d)[/color] " % eff.pride
 		
-		emit_signal("seat_confirmed", SEAT_TYPES[type])
+	result_log_label.text = log_text
 
-func _on_exit_pressed():
+# --- 辅助函数：抽取事件 ---
+func _pick_random_event():
+	var valid_events = []
+	for evt in ATMOSPHERE_EVENTS:
+		# 调用 lambda 检查条件
+		if evt.cond.call():
+			valid_events.append(evt)
+	
+	if valid_events.size() > 0:
+		return valid_events.pick_random()
+	else:
+		# 兜底
+		return {
+			"id": "NONE", 
+			"text": "图书馆很安静，什么也没发生。", 
+			"effect": {}
+		}
+
+# --- 第三步：点击“开始学习/结算”，回到主场景 ---
+# 绑定到 ResultPanel 里的 "开始" 按钮
+func _on_start_action_pressed():
+	# 可以在这里播放一个翻书音效
+	
+	# 发送信号，把两份数据传出去
+	emit_signal("session_started", final_seat_data, final_event_data)
+	
+	# 关闭界面
 	hide()
-	get_tree().paused = false
+	# 如果你是 popup 模式，这里可能需要 queue_free() 或者 hide()
