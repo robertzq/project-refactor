@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://tv4cm1lv1vpr" path="res://_Scenes/Building_Lib.tscn" id="3_e2qk1"]
 [ext_resource type="Script" uid="uid://cjycr0ihfhca4" path="res://_Scripts/UI_LifePath.gd" id="3_e4xpx"]
 [ext_resource type="PackedScene" uid="uid://drny7bgdvsesv" path="res://_Scenes/Building_Dorm.tscn" id="4_b4a7i"]
-[ext_resource type="Script" path="res://_Scenes/camera_3d_2.gd" id="6_rtyws"]
+[ext_resource type="Script" uid="uid://bi5d8f3gh05cu" path="res://_Scripts/camera_3d_2.gd" id="6_rtyws"]
 [ext_resource type="PackedScene" uid="uid://dr5mmjbw58np1" path="res://_Scenes/UI_Event.tscn" id="6_ugwwi"]
 [ext_resource type="Script" uid="uid://cdxu1tvbqnx32" path="res://_Scripts/Managers/GameManager.gd" id="8_kir0c"]
 [ext_resource type="PackedScene" uid="uid://dhtnfx12h2s3k" path="res://_Assets/kaykit_city_builder_bits/Assets/gltf/building_B.gltf" id="11_qbear"]
@@ -127,4 +127,5 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.029327, 1.1269968, -4.96818
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 1)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="building_A2/Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.26678872, 0)
 mesh = SubResource("TextMesh_cyiwf")
