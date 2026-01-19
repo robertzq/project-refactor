@@ -72,19 +72,77 @@ var current_seat_type_key = ""
 var final_seat_data = {}
 var final_event_data = {}
 
+# --- 新增：初始化入口函数 ---
+# 主场景在 add_child 或 show 之前会调用这个
+func setup(_data = null):
+	# 1. 确保界面可见
+	show()
+	
+	# 2. 重置 UI 状态 (隐藏之前的弹窗)
+	confirm_panel.hide()
+	result_panel.hide()
+	seat_info_label.text = ""
+	result_log_label.text = ""
+	
+	# 3. 清空之前的选择
+	current_selected_seat_btn = null
+	current_seat_type_key = ""
+	
+	# 4. (可选) 每次进入都重新随机一下座位被占用的情况
+	# 这样每天进图书馆，空座位都不一样
+	_randomize_occupancy_reset() 
+
+# --- 修改辅助函数：重置座位状态 ---
+func _randomize_occupancy_reset():
+	for seat in seats_container.get_children():
+		if seat is TextureButton:
+			# 先恢复默认状态
+			seat.disabled = false 
+			seat.modulate = Color(1, 1, 1) 
+			
+			# 再随机禁用 (30% 概率)
+			if randf() < 0.3:
+				seat.disabled = true
+				seat.modulate = Color(0.5, 0.5, 0.5)
+				
 func _ready():
 	# 1. 隐藏弹窗
 	confirm_panel.hide()
 	result_panel.hide()
 	
-	# 2. 连接所有座位的信号
-	for seat in seats_container.get_children():
-		if seat is TextureButton:
-			# 绑定点击事件，把按钮本身传进去
-			seat.pressed.connect(_on_seat_clicked.bind(seat))
+	# --- 调试代码 ---
+	if seats_container == null:
+		printerr("!!! 严重错误: 找不到 Seats_Container，请检查路径 $TextureRect/Seats_Container 是否正确！")
+		return
+		
+	var children = seats_container.get_children()
+	print("--- 调试信息 ---")
+	print("找到座位容器，其中的子节点数量: ", children.size())
 	
-	# 3. 初始化占座情况 (可选：随机把一些座位变灰)
+	# 2. 连接所有座位的信号
+	var connected_count = 0
+	for seat in children:
+		# 打印一下子节点的类型，看看是不是 TextureButton
+		# print("子节点: ", seat.name, " 类型: ", seat.get_class()) 
+		
+		if seat is TextureButton:
+			# 只要还没连过，就连上
+			if not seat.pressed.is_connected(_on_seat_clicked):
+				seat.pressed.connect(_on_seat_clicked.bind(seat))
+				connected_count += 1
+	
+	print("成功连接信号的座位数: ", connected_count)
+	print("----------------")
+
+	# 3. 初始化占座
 	_randomize_occupancy()
+	
+	# 4. (关键) 确保确认按钮和开始按钮也连接了！
+	if confirm_seat_btn and not confirm_seat_btn.pressed.is_connected(_on_confirm_occupy_pressed):
+		confirm_seat_btn.pressed.connect(_on_confirm_occupy_pressed)
+	if start_action_btn and not start_action_btn.pressed.is_connected(_on_start_action_pressed):
+		start_action_btn.pressed.connect(_on_start_action_pressed)
+	
 
 func _randomize_occupancy():
 	for seat in seats_container.get_children():
@@ -96,6 +154,7 @@ func _randomize_occupancy():
 
 # --- 第一步：点击座位，弹出确认框 ---
 func _on_seat_clicked(seat_btn: TextureButton):
+	print(">>> 点击了座位: ", seat_btn.name)
 	current_selected_seat_btn = seat_btn
 	
 	# 核心修改：使用 Groups 判断类型

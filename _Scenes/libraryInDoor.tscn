@@ -12,12 +12,14 @@ script = ExtResource("1_emuvi")
 layout_mode = 0
 offset_right = 3216.0
 offset_bottom = 1774.0
+mouse_filter = 2
 texture = ExtResource("1_a8l3a")
 
 [node name="Seats_Container" type="Control" parent="TextureRect"]
 anchors_preset = 0
 offset_right = 3222.0
 offset_bottom = 1778.0
+mouse_filter = 2
 
 [node name="seat_31" type="TextureButton" parent="TextureRect/Seats_Container" groups=["normal_seats"]]
 layout_mode = 0
