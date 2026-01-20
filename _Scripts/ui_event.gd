@@ -14,6 +14,7 @@ extends CanvasLayer
 @onready var time_label = $StatsPanel/TimeLabel
 @onready var project_label = $StatsPanel/ProjectLabel
 # @onready var ap_label = $StatsPanel/APLabel 
+@onready var status_lbl = $StatusChangeLbl
 
 var current_event: Dictionary = {}
 
@@ -21,6 +22,9 @@ func _ready():
 	panel_root.visible = false
 	# 初始隐藏，防止挡住视线
 	update_hud()
+	if status_lbl:
+		status_lbl.hide()
+		status_lbl.modulate.a = 0 # 透明度设为0
 
 func _process(_delta):
 	# 实时刷新 HUD
@@ -31,28 +35,35 @@ func _process(_delta):
 # ========================================================
 func update_hud():
 	if money_label:
-		money_label.text = "资金: ¥%d" % Global.money # 确保 Global.gd 里有 money
+		money_label.text = "资金: ¥%d" % Global.money 
 	
 	if time_label:
 		time_label.text = "第 %d 周" % Global.current_week
 	
-	# 项目显示
+	if project_label:
 		if Global.current_active_project_id != "":
 			var p_name = Global.life_path_db[Global.current_active_project_id]["name"]
 			project_label.text = "目标: %s\n进度: %.1f%%" % [p_name, Global.project_progress]
 		else:
 			project_label.text = "当前无目标\n(按TAB规划)"
-		# 假设 Global 里叫 anxiety 或者 current_anxiety，请保持一致
-		# 这里假设你 Global 里用的是 'sensitivity' 来代表焦虑阈值，或者你有单独的 anxiety
-		# 为了跑通，我先用假数据代替，你记得换成 Global.xxx
+			
+	if anxiety_label:
 		var current = Global.current_anxiety
-		var limit = 100.0 
 		
+		# 🔥 核心修改：不再写死 100.0，而是读取 Global 的动态上限
+		# 确保 Global.gd 里有 get_max_anxiety_limit() 函数
+		var limit = Global.get_max_anxiety_limit() 
+		
+		# 显示格式：焦虑: 45.2 / 96.0
 		anxiety_label.text = "焦虑: %.1f / %.1f" % [current, limit]
-		if current >= limit * 0.5:
-			anxiety_label.modulate = Color.RED
+		
+		# 颜色警示逻辑 (可调整)
+		if current >= limit * 0.9:
+			anxiety_label.modulate = Color(1, 0, 0) # 红色 (极危)
+		elif current >= limit * 0.7:
+			anxiety_label.modulate = Color(1, 0.5, 0) # 橙色 (警告)
 		else:
-			anxiety_label.modulate = Color.WHITE
+			anxiety_label.modulate = Color(1, 1, 1) # 白色 (正常)
 
 # ========================================================
 # 2. 事件弹窗逻辑
@@ -225,9 +236,33 @@ func parse_and_execute(command_str: String):
 					if need_settlement:
 						# 🛑 触发半月结算！
 						Global.show_settlement()
-						
+			
+			"relation": 
+				# 语法: relation_hong:10 -> 拆分出 "relation_hong" 和 10
+				# 或者 CSV 里写的是 relation_hong:10，那么 action 就是 "relation_hong"
+				# 为了通用，建议 CSV 改写为 relation:hong:10，或者我们在 default 里处理
+				pass 
+			
+			"path_branch":
+				# 语法: path_branch:hong_wp
+				# 这通常意味着解锁某个隐藏路径，或者设置某个剧情旗标
+				var branch_id = parts[1]
+				Global.unlock_hidden_path(branch_id) # 需要在 Global 加这个函数
+				print("   -> 剧情分支解锁: ", branch_id)
+							
+			# --- 通用属性处理 (涵盖 relation_xxx, health, sanity 等) ---
 			_:
-				print("⚠️ 未知指令: ", action)
+				# 如果指令是 relation_hong:10
+				if action.begins_with("relation_"):
+					var val = int(parts[1])
+					# 可以在 Global 里搞一个 relations 字典
+					Global.update_relation(action, val)
+				elif action == "sanity" or action == "health" or action == "charm":
+					# 处理 CSV 里出现的这些额外属性
+					var val = int(parts[1])
+					print("   -> [未实装属性] %s 变动: %d" % [action, val])
+				else:
+					print("⚠️ 未知指令: ", action)
 				
 	# 循环结束后，把故事写入 Global
 	if story_fragment != "":
@@ -247,3 +282,40 @@ func apply_stress(val, type):
 		# 模拟逻辑，防止报错卡死
 		if not Global.get("anxiety"): Global.set("anxiety", 0)
 		Global.anxiety += val
+
+var is_showing_status: bool = false
+
+func _input(event):
+	# 监听回车键或点击，且当前正在显示状态条
+	if is_showing_status and (event.is_action_pressed("ui_accept") or event.is_action_pressed("ui_cancel") or event is InputEventMouseButton):
+		hide_status_report()
+		# 消耗掉这个输入，防止穿透触发其他逻辑
+		get_viewport().set_input_as_handled()
+
+func show_status_report(text_content: String, _duration: float = 0.0): # duration 参数不再需要了
+	if not status_lbl: return
+
+	print(">>> UI 显示结算单 (等待按键关闭)")
+
+	status_lbl.text = text_content + "\n\n[按回车键或点击关闭]" # 提示玩家
+	status_lbl.show()
+	status_lbl.modulate.a = 0.0
+
+	# 淡入
+	var tween = create_tween()
+	tween.tween_property(status_lbl, "modulate:a", 1.0, 0.3)
+
+	is_showing_status = true
+	# 暂停游戏，防止玩家在看结算单时乱跑
+	get_tree().paused = true 
+
+func hide_status_report():
+	if not status_lbl: return
+
+	is_showing_status = false
+
+	# 淡出并隐藏
+	var tween = create_tween()
+	tween.tween_property(status_lbl, "modulate:a", 0.0, 0.2)
+	tween.tween_callback(status_lbl.hide)
+	tween.tween_callback(func(): get_tree().paused = false) # 恢复游戏

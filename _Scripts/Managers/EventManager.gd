@@ -48,8 +48,10 @@ func check_for_event(trigger_type: String):
 	var candidates = []
 	for id in event_db:
 		var evt = event_db[id]
-		# 因为 CSV 表头现在叫 type，所以这里直接 get("type") 就能取到
-		if evt.get("type") == trigger_type:
+		
+		# 🔴 原代码: if evt.get("type") == trigger_type: 
+		# ✅ 修正为: 读取 CSV 里的 "trigger" 列
+		if evt.get("trigger") == trigger_type:
 			candidates.append(evt)
 	
 	if candidates.size() > 0:

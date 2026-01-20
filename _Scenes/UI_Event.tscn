@@ -17,40 +17,44 @@ grow_vertical = 2
 
 [node name="Background" type="ColorRect" parent="Control"]
 layout_mode = 0
-offset_right = 504.0
-offset_bottom = 259.0
+offset_right = 1147.0
+offset_bottom = 357.0
 color = Color(0.060530342, 0.06053035, 0.060530327, 0.0627451)
 
 [node name="Panel" type="Panel" parent="Control"]
 layout_mode = 0
-offset_right = 507.0
-offset_bottom = 260.0
+offset_right = 1150.0
+offset_bottom = 647.0
 
 [node name="Label" type="Label" parent="Control/Panel"]
 layout_mode = 0
-offset_top = 25.0
-offset_right = 40.0
-offset_bottom = 48.0
+offset_top = 104.0
+offset_right = 82.0
+offset_bottom = 171.0
+theme_override_font_sizes/font_size = 48
 text = "111"
 
 [node name="OptionContainer" type="VBoxContainer" parent="Control/Panel"]
 layout_mode = 0
-offset_left = 9.0
-offset_top = 61.0
-offset_right = 502.0
-offset_bottom = 105.0
+offset_top = 338.0
+offset_right = 493.0
+offset_bottom = 382.0
 
 [node name="TitleLabel" type="Label" parent="Control/Panel"]
 layout_mode = 0
-offset_top = 48.0
-offset_right = 40.0
-offset_bottom = 71.0
+offset_top = 176.0
+offset_right = 92.0
+offset_bottom = 243.0
+theme_override_font_sizes/font_size = 48
+text = "title"
 
 [node name="ResultLog" type="Label" parent="Control/Panel"]
 layout_mode = 0
-offset_top = 80.0
-offset_right = 40.0
-offset_bottom = 103.0
+offset_top = 249.0
+offset_right = 134.0
+offset_bottom = 316.0
+theme_override_font_sizes/font_size = 48
+text = "result"
 
 [node name="StatsPanel" type="HBoxContainer" parent="."]
 offset_right = 174.0
@@ -58,16 +62,28 @@ offset_bottom = 30.0
 
 [node name="MoneyLabel" type="Label" parent="StatsPanel"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 48
 text = "Money: $0"
 
 [node name="AnxietyLabel" type="Label" parent="StatsPanel"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 48
 text = "Anxiety: 0%"
 
 [node name="TimeLabel" type="Label" parent="StatsPanel"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 48
 text = "Time:"
 
 [node name="ProjectLabel" type="Label" parent="StatsPanel"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 48
 text = "Project"
+
+[node name="StatusChangeLbl" type="Label" parent="."]
+offset_left = 359.0
+offset_top = 263.0
+offset_right = 735.0
+offset_bottom = 340.0
+theme_override_font_sizes/font_size = 56
+text = "status change"

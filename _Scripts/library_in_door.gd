@@ -26,22 +26,42 @@ const SEAT_TYPES = {
 var ATMOSPHERE_EVENTS = [
 	{
 		"id": "PEER_PRESSURE",
-		"cond": func(): return Global.pride > 5, 
+		"cond": func(): return Global.pride >= 4, # 放宽条件：自尊大于等于4就能触发
 		"text": "你看到对面座位的书堆得像山一样，而你才刚翻开第一页。",
 		"effect": {"stress": 10}
 	},
 	{
 		"id": "RICH_GADGET",
-		"cond": func(): return Global.fin_security < 3,
+		"cond": func(): return Global.fin_security < 4, # 放宽条件
 		"text": "旁边的同学拿出了最新的 iPad Pro 和 Apple Pencil，你默默把草稿纸往回缩了缩。",
 		"effect": {"pride": -1, "stress": 5}
 	},
 	{
 		"id": "FLOW_STATE",
-		"cond": func(): return Global.base_exec > 1.1,
+		"cond": func(): return Global.base_exec >= 1.1, # 修正：包含 1.1
 		"text": "刚坐下，你就闻到了旧书特有的香草味，心情意外地平静。",
 		"effect": {"stress": -15}
 	},
+	# --- 新增几个通用事件，稀释“情侣”出现的概率 ---
+	{
+		"id": "SUDDEN_NOISE",
+		"cond": func(): return true,
+		"text": "有人重重地把不锈钢水杯砸在桌上，巨大的声响吓了你一跳。",
+		"effect": {"stress": 5}
+	},
+	{
+		"id": "GOOD_SEAT",
+		"cond": func(): return true,
+		"text": "今天的椅子似乎调到了完美的高度，你的腰舒服了很多。",
+		"effect": {"stress": -5}
+	},
+	{
+		"id": "RAINY_DAY",
+		"cond": func(): return true,
+		"text": "窗外开始下起小雨，雨声反而成了最好的白噪音。",
+		"effect": {"stress": -5, "entropy": 1} # 加一点点眼界
+	},
+	# -----------------------------------------------
 	{
 		"id": "COUPLE_DISTRACT",
 		"cond": func(): return true, 
@@ -92,18 +112,6 @@ func setup(_data = null):
 	# 这样每天进图书馆，空座位都不一样
 	_randomize_occupancy_reset() 
 
-# --- 修改辅助函数：重置座位状态 ---
-func _randomize_occupancy_reset():
-	for seat in seats_container.get_children():
-		if seat is TextureButton:
-			# 先恢复默认状态
-			seat.disabled = false 
-			seat.modulate = Color(1, 1, 1) 
-			
-			# 再随机禁用 (30% 概率)
-			if randf() < 0.3:
-				seat.disabled = true
-				seat.modulate = Color(0.5, 0.5, 0.5)
 				
 func _ready():
 	# 1. 隐藏弹窗
@@ -144,13 +152,42 @@ func _ready():
 		start_action_btn.pressed.connect(_on_start_action_pressed)
 	
 
-func _randomize_occupancy():
+# 1. 重置所有座位 (务必添加清理遮罩的逻辑)
+func _randomize_occupancy_reset():
 	for seat in seats_container.get_children():
 		if seat is TextureButton:
-			# 30% 概率被占
+			# A. 恢复交互状态
+			seat.disabled = false 
+			seat.modulate = Color(1, 1, 1) # 恢复原色
+			
+			# B. 清理掉之前生成的红色遮罩 (如果有的话)
+			if seat.has_node("OccupiedMask"):
+				seat.get_node("OccupiedMask").queue_free()
+
+# 2. 随机占座 (生成红色遮罩)
+func _randomize_occupancy():
+	_randomize_occupancy_reset()
+
+	for seat in seats_container.get_children():
+		if seat is TextureButton:
 			if randf() < 0.3:
 				seat.disabled = true
-				seat.modulate = Color(0.5, 0.5, 0.5) # 变灰
+				
+				var mask = ColorRect.new()
+				mask.name = "OccupiedMask"
+				mask.color = Color(1, 0, 0, 0.5)
+				mask.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				
+				seat.add_child(mask)
+				
+				# --- 修复尝试 1: 强制设置大小 ---
+				# 如果 Full Rect 不生效，试试手动设为父节点大小
+				mask.size = seat.size 
+				# 或者保持用 preset
+				# mask.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+				
+				# --- 修复尝试 2: 确保绘制在最上层 ---
+				mask.z_index = 1
 
 # --- 第一步：点击座位，弹出确认框 ---
 func _on_seat_clicked(seat_btn: TextureButton):

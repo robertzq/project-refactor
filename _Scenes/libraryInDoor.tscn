@@ -240,10 +240,10 @@ offset_right = 1886.0
 offset_bottom = 1595.0
 
 [node name="ConfirmPanel" type="Panel" parent="."]
-visible = false
 layout_mode = 0
+offset_top = 147.0
 offset_right = 1342.0
-offset_bottom = 646.0
+offset_bottom = 793.0
 
 [node name="InfoLabel" type="Label" parent="ConfirmPanel"]
 layout_mode = 0
@@ -262,7 +262,6 @@ theme_override_font_sizes/font_size = 48
 text = "确认选座"
 
 [node name="ResultPanel" type="Panel" parent="."]
-visible = false
 layout_mode = 0
 offset_top = 1119.0
 offset_right = 1346.0

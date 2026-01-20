@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://cd0dilme3lpn8"]
+
+[ext_resource type="Texture2D" uid="uid://box1pshlmkwek" path="res://_Assets/Art/bkend.png" id="1_cxhxi"]
+[ext_resource type="Script" uid="uid://uyln6my1c2t6" path="res://_Scripts/bkend.gd" id="1_jmsmv"]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_jmsmv")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+offset_right = 1163.0
+offset_bottom = 640.0
+texture = ExtResource("1_cxhxi")

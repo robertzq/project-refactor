@@ -24,7 +24,7 @@ var pride: int = 5          # 自尊 (P_pride): 增加 EGO 伤害
 var entropy: int = 5        # 熵/视野: 影响工作难度
 var sensitivity: float = 1.0 # 敏感度 (P_sens): 全局伤害乘区
 var base_exec: float = 1.0  # 执行力基数 (E_base): 影响工作效率
-
+var is_in_breakdown: bool = false
 # [状态记录]
 var current_anxiety: float = 0.0 # 当前焦虑值
 var traits: Array = []           # 特质列表 (如 "背水一战", "卷王")
@@ -32,6 +32,7 @@ var recovery_strategy: String = "Explorer" # <--- 【已补回】回血策略 (E
 var is_employed: bool = false
 var current_study_buff: Dictionary = {}  # <--- 新增这一行
 var sedimentation: int = 0   # 沉淀值
+var day_progress: int = 0 # 新增：0-6 代表一周的每一天
 # 1. 定义信号 (通知 UI 刷新)
 signal vision_improved(new_entropy, message) # 当眼界提升时发出信号
 
@@ -72,6 +73,7 @@ func init_character(archetype: String):
 	traits = []
 	recovery_strategy = "Explorer" # 默认值，会在火车问卷中被修改
 	current_archetype_code  = archetype
+	is_in_breakdown = false
 	# 2. 根据出身设定初始数值
 	match archetype:
 		# 1. 都会精英 (The Golden Child)
@@ -229,7 +231,13 @@ func apply_stress(base_val: float, type: String, is_working: bool = false) -> Di
 			var entropy_mult = 0.8 + (entropy * 0.05)
 			omega = modified_base * entropy_mult
 			log_reason = "认知修正(x%.2f)" % entropy_mult
-			
+		
+		"STATUS", "GEN": 
+			# 状态类/通用类压力
+			# 可以设定为受 entropy 影响，或者直接就是 base_val
+			omega = modified_base
+			log_reason = "基础生存压力"
+				
 		_:
 			omega = modified_base
 
@@ -284,19 +292,42 @@ func check_is_distracted() -> bool:
 	return is_distracted
 	
 func trigger_breakdown():
+	# 🔥 防止重复触发 (如果已经锁了，就直接返回)
+	if is_in_breakdown: 
+		return
+	
+	# 🔥 上锁！
+	is_in_breakdown = true
 	print(">>> ⚠️ 玩家崩溃！ <<<")
-	# 1. 强制清空当前项目进度 (作为惩罚)
-	# project_progress *= 0.5 
 	
-	# 2. 强制休息几天 (这需要你在 MainWorld 处理信号)
-	# emit_signal("player_breakdown")
-	
-	# 3. 记录惨痛日记
+	# 1. 记录日志
 	record_journal("BREAKDOWN", 0, "精神崩溃")
-	log_story("【崩溃】那根紧绷的弦终于断了。你在医院躺了三天，错过了很多截止日期。")
+	log_story("【崩溃】那根紧绷的弦终于断了... 你在医院昏睡了三天。")
 	
-	# 4. 恢复部分焦虑 (因为休息了)
+	# 2. 数值惩罚 (方案 A)
+	# 焦虑减半，作为休息后的恢复
 	current_anxiety = get_max_anxiety_limit() * 0.5
+	
+	# 进度倒退 10%，且最低不低于 0
+	var penalty = 10.0
+	project_progress = max(0.0, project_progress - penalty)
+	print(">> [System] 崩溃惩罚：进度倒退 %.1f%%" % penalty)
+	
+	# 3. 场景转场 (核心修改)
+	# 使用 call_deferred 安全地切换到崩溃场景
+	call_deferred("_switch_to_breakdown_scene")
+
+# 内部函数：执行场景切换
+func _switch_to_breakdown_scene():
+	# 确保路径正确，请检查你的 bkend.tscn 是否在这个目录下
+	var path = "res://_Scenes/bkend.tscn" 
+	
+	if ResourceLoader.exists(path):
+		get_tree().change_scene_to_file(path)
+	else:
+		printerr("❌ 找不到崩溃场景: ", path)
+	
+	
 # ==============================================================================
 # 4. 辅助工具
 # ==============================================================================
@@ -432,17 +463,22 @@ func select_path(path_id: String):
 	if data.has("gain_sed"): add_sedimentation(data["gain_sed"])
 	
 # --- 时间推进逻辑 ---
-func advance_time():
-	current_week += 1
-	print(">> [Time] 进入第 %d 周" % current_week)
-	emit_signal("time_advanced", current_week)
+# 修改 advance_time，让它支持“天”的流逝
+func advance_time(days_passed: int = 1) -> bool:
+	day_progress += days_passed
+	print(">> [Time] 过了 %d 天" % days_passed)
 	
-	# 检查是否需要半月结算 (偶数周结束时触发)
-	# 比如第2周结束进入第3周前，或者第2周刚过完
-	# 这里逻辑是：当 current_week 变成 3, 5, 7 时，说明前两周过完了
-	if (current_week - 1) % WEEKS_PER_SETTLEMENT == 0:
-		return true # 需要结算
-	return false
+	if day_progress >= 7:
+		day_progress = 0
+		current_week += 1
+		print(">> [Time] 新的一周！当前是第 %d 周" % current_week)
+		emit_signal("time_advanced", current_week)
+		
+		# 检查半月结算 (每2周)
+		if (current_week - 1) % WEEKS_PER_SETTLEMENT == 0:
+			return true # 需要结算
+			
+	return false # 不需要结算
 
 # --- 路径状态检查 (更新) ---
 func get_path_status(path_id: String) -> int:
@@ -475,45 +511,50 @@ func get_path_status(path_id: String) -> int:
 			
 	return PathStatus.AVAILABLE
 
-# --- 开始一个项目 (立项) ---
+var current_project_location: String = "" # 记录当前项目需要在哪里做
+
 func start_project(path_id: String):
 	current_active_project_id = path_id
-	project_progress = 0.0 # 进度归零，开始肝！
-	print(">>> 立项成功: ", life_path_db[path_id]["name"])
+	project_progress = 0.0
+	
+	# 从 DB 获取地点绑定
+	var data = life_path_db[path_id]
+	current_project_location = data.get("location_bind", "LIB") # 默认图书馆
+	
+	print(">>> 立项成功: %s (需前往: %s)" % [data["name"], current_project_location])
 
-# --- 检查项目是否完成 (每次加进度后调用) ---
 func check_project_completion() -> bool:
 	if current_active_project_id == "": return false
 	
+	# 🔥 核心修复：这里应该是 >= 100.0
 	if project_progress >= 100.0:
-		project_progress = 100.0 # 锁死在 100%
-		complete_active_project()
+		project_progress = 100.0 # 锁死
+		complete_active_project() # 结算
 		return true
+		
 	return false
 
-# --- 完成项目 (结算) ---
 func complete_active_project():
 	var id = current_active_project_id
 	print(">>> 🎉 项目完成: ", id)
 	
-	# 1. 正式加入已完成列表
-	selected_paths.append(id)
+	# 1. 加入已完成列表 (这样它的子节点就不再是 BLURRED 了)
+	if id not in selected_paths:
+		selected_paths.append(id)
 	
-	# 2. 激活互斥锁
+	# 2. 奖励结算
 	var data = life_path_db[id]
-	if data.has("mutex_group"):
-		active_mutex_groups.append(data["mutex_group"])
-	
-	# 3. 获得一次性收益 (如眼界、沉淀)
-	if data.has("gain_entropy"): entropy += data["gain_entropy"]
-	if data.has("gain_sed"): add_sedimentation(data["gain_sed"])
-	
-	# 4. 清空当前项目
+	if data.has("gain_entropy"): 
+		entropy += data["gain_entropy"]
+		print("✨ 获得奖励: 眼界 +%d" % data["gain_entropy"])
+		
+	# 3. 清空当前项目 (让玩家可以选新的)
 	current_active_project_id = ""
 	project_progress = 0.0
 	
-	# 5. 发信号通知 UI
-	emit_signal("vision_improved", entropy, "项目完成！") # 复用刷新信号
+	# 4. 通知 UI 刷新 (重要！)
+	# 你之前的代码里可能叫 vision_improved，建议复用这个信号
+	emit_signal("vision_improved", entropy, "项目【%s】已完成！" % data["name"])
 
 func show_settlement():
 	# 延迟一点点，等当前事件框关掉
@@ -531,3 +572,18 @@ func clear_study_buff():
 	if not current_study_buff.is_empty():
 		print(">> [Global] 离开座位，Buff失效。")
 		current_study_buff.clear()
+		
+var relations: Dictionary = {}
+
+# 更新人际关系
+func update_relation(npc_id: String, val: int):
+	if not relations.has(npc_id): relations[npc_id] = 0
+	relations[npc_id] += val
+	print(">> [Relation] %s 关系变化: %+d (当前: %d)" % [npc_id, val, relations[npc_id]])
+
+# 解锁隐藏路径 (对应 path_branch)
+func unlock_hidden_path(branch_id: String):
+	# 简单实现：将某个路径的条件设为满足，或者直接加入 unlocked 列表
+	# 这里假设我们在 life_paths.json 里并没有真的做分支逻辑，
+	# 暂时先打印日志，或者给点奖励
+	log_story("命运的分歧点：你选择了 [%s]" % branch_id)
