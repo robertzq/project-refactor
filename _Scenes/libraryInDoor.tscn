@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://da5w0qf5fcf8y" path="res://_Scripts/library_in_door.gd" id="1_emuvi"]
 
 [node name="Control" type="Control"]
+process_mode = 3
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_emuvi")
@@ -239,22 +240,29 @@ offset_right = 1886.0
 offset_bottom = 1595.0
 
 [node name="ConfirmPanel" type="Panel" parent="."]
+visible = false
 layout_mode = 0
 offset_right = 1342.0
 offset_bottom = 646.0
 
 [node name="InfoLabel" type="Label" parent="ConfirmPanel"]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 23.0
+offset_right = 1340.0
+offset_bottom = 438.0
+theme_override_font_sizes/font_size = 52
+text = "info label"
 
 [node name="ConfirmBtn" type="Button" parent="ConfirmPanel"]
 layout_mode = 0
-offset_right = 8.0
-offset_bottom = 8.0
+offset_left = 5.0
+offset_top = 453.0
+offset_right = 698.0
+offset_bottom = 644.0
+theme_override_font_sizes/font_size = 48
 text = "确认选座"
 
 [node name="ResultPanel" type="Panel" parent="."]
+visible = false
 layout_mode = 0
 offset_top = 1119.0
 offset_right = 1346.0
@@ -264,13 +272,16 @@ offset_bottom = 1771.0
 layout_mode = 0
 offset_right = 1337.0
 offset_bottom = 268.0
+theme_override_font_sizes/font_size = 56
+text = "log label"
 
 [node name="StartBtn" type="Button" parent="ResultPanel"]
 layout_mode = 0
 offset_left = -2.0
-offset_top = 525.0
-offset_right = 335.0
+offset_top = 438.0
+offset_right = 706.0
 offset_bottom = 651.0
+theme_override_font_sizes/font_size = 48
 text = "开始学习"
 
 [connection signal="pressed" from="ConfirmPanel/ConfirmBtn" to="." method="_on_confirm_occupy_pressed"]

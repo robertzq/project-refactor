@@ -30,7 +30,7 @@ var current_anxiety: float = 0.0 # 当前焦虑值
 var traits: Array = []           # 特质列表 (如 "背水一战", "卷王")
 var recovery_strategy: String = "Explorer" # <--- 【已补回】回血策略 (Extrovert/Introvert/Explorer)
 var is_employed: bool = false
-
+var current_study_buff: Dictionary = {}  # <--- 新增这一行
 var sedimentation: int = 0   # 沉淀值
 # 1. 定义信号 (通知 UI 刷新)
 signal vision_improved(new_entropy, message) # 当眼界提升时发出信号
@@ -143,6 +143,14 @@ func get_efficiency() -> Dictionary:
 	var final_eff = base_exec
 	var curse = "无"
 	
+	# --- 新增：应用图书馆座位 Buff ---
+	if not current_study_buff.is_empty() and current_study_buff.has("eff_mod"):
+		var seat_mod = current_study_buff["eff_mod"]
+		final_eff *= seat_mod
+		# 只有当加成显著时才记录，避免日志太乱
+		if seat_mod != 1.0:
+			print("   >> [Buff] 座位加成: x%.2f" % seat_mod)
+	# -------------------------------
 	# 简单的诅咒判定示例
 	if fin_security > 7 and current_anxiety < 30:
 		final_eff *= 0.7
@@ -180,6 +188,14 @@ func apply_stress(base_val: float, type: String, is_working: bool = false) -> Di
 	# Step 1: 计算原始压力 (Omega)
 	var omega = base_val
 	var log_reason = ""
+	
+	# --- 新增：应用座位带来的额外压力 (固定值) ---
+	if not current_study_buff.is_empty() and current_study_buff.has("stress_fix"):
+		var fix_val = current_study_buff["stress_fix"]
+		if fix_val != 0:
+			omega += fix_val
+			log_reason += "[座位%+d]" % fix_val
+	# ----------------------------------------
 	
 	match type:
 		"MONEY":
@@ -472,3 +488,26 @@ func show_settlement():
 	# 假设 UI_Settlement 会自动添加到 CanvasLayer
 	get_tree().root.add_child(settlement)
 	settlement.setup_report() # 生成报告
+
+# --- 辅助：检查是否分心 ---
+# 返回 true 表示分心了，false 表示专注
+func check_is_distracted() -> bool:
+	var base_chance = 0.05 # 基础分心率 5%
+	
+	# 叠加座位的分心风险
+	if not current_study_buff.is_empty():
+		base_chance += current_study_buff.get("distraction_chance", 0.0)
+	
+	# 进行判定
+	if randf() < base_chance:
+		print(">> [Global] 哎呀！分心了！(概率: %.0f%%)" % (base_chance * 100))
+		return true
+	
+	return false
+
+# --- 辅助：清理 Buff (重要！) ---
+# 每次离开图书馆或结算完成后必须调用
+func clear_study_buff():
+	if not current_study_buff.is_empty():
+		print(">> [Global] 离开座位，Buff失效。")
+		current_study_buff.clear()

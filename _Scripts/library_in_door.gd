@@ -167,7 +167,7 @@ func _on_seat_clicked(seat_btn: TextureButton):
 		
 	# 更新 UI
 	var data = SEAT_TYPES[current_seat_type_key]
-	seat_info_label.text = "[b]%s[/b]\n%s" % [data.name, data.desc]
+	seat_info_label.text = "%s  %s" % [data.name, data.desc]
 	
 	# 显示确认框，隐藏之前的逻辑
 	confirm_panel.show()
@@ -187,7 +187,7 @@ func _on_confirm_occupy_pressed():
 	# 3. 在底部面板显示结果
 	result_panel.show()
 	
-	var log_text = "你选择了 [color=yellow]%s[/color]。\n" % final_seat_data.name
+	var log_text = "你选择了 %s。\n" % final_seat_data.name
 	log_text += "----------------\n"
 	log_text += final_event_data.text + "\n"
 	
@@ -195,9 +195,9 @@ func _on_confirm_occupy_pressed():
 	var eff = final_event_data.effect
 	if "stress" in eff:
 		var sign_str = "+" if eff.stress > 0 else ""
-		log_text += "[color=red](压力 %s%d)[/color] " % [sign_str, eff.stress]
+		log_text += "(压力 %s%d) " % [sign_str, eff.stress]
 	if "pride" in eff:
-		log_text += "[color=cyan](自尊 %d)[/color] " % eff.pride
+		log_text += "(自尊 %d) " % eff.pride
 		
 	result_log_label.text = log_text
 
