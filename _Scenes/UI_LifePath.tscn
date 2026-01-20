@@ -10,20 +10,25 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_right = 238.0
+offset_bottom = 374.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="ColorRect" type="ColorRect" parent="Control"]
 layout_mode = 0
-offset_right = 1161.0
-offset_bottom = 646.0
+offset_left = 1.0
+offset_top = 71.0
+offset_right = 1394.0
+offset_bottom = 1018.0
 color = Color(0, 0, 0, 0.5882353)
 
 [node name="Label" type="Label" parent="Control"]
 layout_mode = 0
 offset_left = 350.0
+offset_top = 83.0
 offset_right = 772.0
-offset_bottom = 69.0
+offset_bottom = 152.0
 text = "人生路径规划 (TAB)"
 label_settings = SubResource("LabelSettings_wyyp5")
 horizontal_alignment = 1
@@ -35,17 +40,18 @@ anchor_left = 0.002
 anchor_top = 0.116000004
 anchor_right = 0.002
 anchor_bottom = 0.116000004
-offset_left = -0.30400014
-offset_top = -0.16799927
-offset_right = 1156.696
-offset_bottom = 430.832
+offset_left = 18.22
+offset_top = 31.832
+offset_right = 1359.22
+offset_bottom = 782.448
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="PathList" type="VBoxContainer" parent="Control/ScrollContainer"]
+[node name="TreeContainer" type="VBoxContainer" parent="Control/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+alignment = 2
 
 [node name="Button" type="Button" parent="Control"]
 layout_mode = 1
@@ -53,6 +59,7 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -40.0
-offset_bottom = 31.0
+offset_top = 85.0
+offset_bottom = 116.0
 grow_horizontal = 0
 text = "关闭"

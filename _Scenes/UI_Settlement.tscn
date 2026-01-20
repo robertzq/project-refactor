@@ -11,22 +11,23 @@ script = ExtResource("1_812l4")
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 0
-offset_right = 743.0
-offset_bottom = 472.0
+offset_right = 870.0
+offset_bottom = 652.0
 
 [node name="StoryText" type="RichTextLabel" parent="Panel"]
 layout_mode = 0
-offset_top = 31.0
-offset_right = 743.0
-offset_bottom = 420.0
+offset_left = 4.0
+offset_top = 136.0
+offset_right = 846.0
+offset_bottom = 566.0
 theme_override_font_sizes/normal_font_size = 46
 text = "test"
 
 [node name="NextBtn" type="Button" parent="Panel"]
 layout_mode = 0
-offset_top = 425.0
+offset_top = 585.0
 offset_right = 104.0
-offset_bottom = 464.0
+offset_bottom = 624.0
 text = "翻开新的一页"
 
 [connection signal="pressed" from="Panel/NextBtn" to="." method="_on_next_btn_pressed"]

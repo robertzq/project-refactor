@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Project Refactor - Life Path Editor</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --panel-bg: #252526;
+            --text-color: #d4d4d4;
+            --accent-color: #0e639c;
+            --border-color: #3e3e42;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        /* 左侧画布 */
+        #network-container {
+            flex-grow: 1;
+            height: 100%;
+            background-color: #1e1e1e;
+            position: relative;
+        }
+        /* 右侧属性面板 */
+        #sidebar {
+            width: 400px;
+            background-color: var(--panel-bg);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.3);
+        }
+        .sidebar-header {
+            padding: 15px;
+            background-color: #333333;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #aaaaaa;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            background-color: #3c3c3c;
+            border: 1px solid var(--border-color);
+            color: white;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .btn-group {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 12px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-primary { background-color: var(--accent-color); }
+        .btn-primary:hover { background-color: #1177bb; }
+        .btn-danger { background-color: #c53030; }
+        .btn-danger:hover { background-color: #e53e3e; }
+        .btn-success { background-color: #2da44e; }
+        .btn-secondary { background-color: #444; }
+
+        /* 顶部工具栏 */
+        #toolbar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            background: rgba(40, 40, 40, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--border-color);
+        }
+        
+        .divider {
+            margin: 20px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        h3 { margin-top: 0; font-size: 16px; color: white; }
+        
+        /* 数值输入组 */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toolbar">
+        <button class="btn-success" onclick="exportJSON()">导出 JSON</button>
+        <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">导入 JSON</button>
+        <input type="file" id="fileInput" style="display:none" onchange="importJSON(this)">
+        <span style="margin-left:10px; font-size:12px; color:#aaa;">右键点击空白处新建节点</span>
+    </div>
+
+    <div id="network-container"></div>
+
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <span>节点属性</span>
+            <span id="selected-node-id" style="font-size:10px; color:#aaa;">未选择</span>
+        </div>
+        <div class="sidebar-content" id="form-container" style="display:none;">
+            
+            <div class="form-group">
+                <label>ID (Key)</label>
+                <input type="text" id="node-id" readonly style="color:#888; cursor:not-allowed;">
+            </div>
+
+            <div class="form-group">
+                <label>名称 (Name)</label>
+                <input type="text" id="node-name" oninput="updateNodeData()">
+            </div>
+
+            <div class="form-group">
+                <label>描述 (Desc)</label>
+                <textarea id="node-desc" oninput="updateNodeData()"></textarea>
+            </div>
+
+            <div class="stat-grid">
+                <div class="form-group">
+                    <label>层级 (Tier)</label>
+                    <input type="number" id="node-tier" oninput="updateNodeData()">
+                </div>
+                <div class="form-group">
+                    <label>父节点 (Parent ID)</label>
+                    <input type="text" id="node-parent" oninput="updateNodeData()" placeholder="输入父节点ID">
+                </div>
+            </div>
+
+            <div class="divider"></div>
+            <h3>需求 (Requirements)</h3>
+            <div class="stat-grid">
+                <div class="form-group">
+                    <label>眼界需求 (Entropy)</label>
+                    <input type="number" id="req-entropy" oninput="updateNodeData()">
+                </div>
+                <div class="form-group">
+                    <label>金钱需求</label>
+                    <input type="number" id="req-money" oninput="updateNodeData()">
+                </div>
+                <div class="form-group">
+                    <label>沉淀需求 (Sed)</label>
+                    <input type="number" id="req-sed" oninput="updateNodeData()">
+                </div>
+                <div class="form-group">
+                    <label>互斥组 (Mutex)</label>
+                    <input type="text" id="node-mutex" oninput="updateNodeData()">
+                </div>
+            </div>
+
+            <div class="divider"></div>
+            <h3>代价 & 收益 (Costs & Gains)</h3>
+            <div class="stat-grid">
+                <div class="form-group">
+                    <label>压力代价 (Stress)</label>
+                    <input type="number" id="cost-stress" oninput="updateNodeData()">
+                </div>
+                <div class="form-group">
+                    <label>金钱代价</label>
+                    <input type="number" id="cost-money" oninput="updateNodeData()">
+                </div>
+                <div class="form-group">
+                    <label>沉淀收益 (Gain Sed)</label>
+                    <input type="number" id="gain-sed" oninput="updateNodeData()">
+                </div>
+                <div class="form-group">
+                    <label>进度收益 (Gain Prog)</label>
+                    <input type="number" id="gain-progress" oninput="updateNodeData()">
+                </div>
+                <div class="form-group">
+                    <label>眼界收益 (Gain Entropy)</label>
+                    <input type="number" id="gain-entropy" oninput="updateNodeData()">
+                </div>
+                <div class="form-group">
+                    <label>特质奖励 (Trait)</label>
+                    <input type="text" id="trait-reward" oninput="updateNodeData()">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>策划备注 (Comment)</label>
+                <textarea id="node-comment" oninput="updateNodeData()" style="color:#4ec9b0;"></textarea>
+            </div>
+
+        </div>
+        
+        <div class="btn-group" id="btn-container" style="display:none;">
+            <button class="btn-danger" onclick="deleteSelectedNode()">删除节点</button>
+        </div>
+        
+        <div id="empty-state" style="padding:40px; text-align:center; color:#666;">
+            请在左侧选择一个节点<br>或右键添加新节点
+        </div>
+    </div>
+
+<script>
+    // === 初始数据 (你提供的 JSON) ===
+    let rawData = {
+    "root_freshman": {
+        "name": "报到日",
+        "desc": "2015年的夏天。录取通知书上写着'软件工程'。辅导员说这是朝阳行业，但你还没意识到，这行代码将决定你未来十年的运行逻辑。",
+        "tier": 0,
+        "req_entropy": 0,
+        "gain_entropy": 1,
+        "gain_sed": 1,
+        "gain_charm": 1
+    },
+    "node_train_hard": {
+        "name": "军训与早八",
+        "desc": "C语言课在早八点。你是选择去占座听不懂的课，还是回宿舍补觉？这是你对人生资源的第一笔分配。",
+        "tier": 1,
+        "parent": "root_freshman",
+        "location_bind": "DORM",
+        "cost_stress": 15,
+        "gain_sed": 2,
+        "gain_charm": 1,
+        "comment": "通用的起点。高傲骨(Pride)玩家会在这里感到不适。"
+    },
+    "node_project_final_term": {
+        "name": "期末考试周",
+        "desc": "图书馆凌晨的灯光。为了绩点(GPA)而战，你知道保研名额只留给前5%。这是最稳妥，也最拥挤的路。",
+        "tier": 2,
+        "parent": "node_train_hard",
+        "location_bind": "LIB",
+        "cost_stress": 25,
+        "gain_sed": 6,
+        "gain_charm": -1,
+        "comment": "【做题家主线】牺牲魅力，换取高沉淀。"
+    },
+    "node_project_alpha": {
+        "name": "大作业的疯狂",
+        "desc": "编程课的大作业。你是选择随便做做，还是把它做成一个真正的产品？你决定去啃那些枯燥的文档。",
+        "tier": 2,
+        "parent": "node_train_hard",
+        "location_bind": "LAB",
+        "cost_stress": 30,
+        "gain_sed": 5,
+        "gain_entropy": 2,
+        "comment": "【技术线核心】通往硬核技术路线。"
+    },
+    "node_maid_cafe_parttime": {
+        "name": "二次元兼职/模特",
+        "desc": "你穿上精致的制服。在这里不看绩点，看的是谁能掌控空气。你发现原来靠脸真的能吃饭，而且比写代码容易多了。",
+        "tier": 2,
+        "parent": "node_train_hard",
+        "location_bind": "CAFE",
+        "cost_stress": 5,
+        "gain_money": 3000,
+        "gain_charm": 5,
+        "gain_sed": 0,
+        "comment": "【乌拉线入口】沉淀为0。一旦习惯了赚快钱，就很难回去了。"
+    },
+    "choice_transfer_major": {
+        "name": "转专业/精英班",
+        "desc": "你盯着那个全校最牛的实验班。需要极高的成绩沉淀，和一点点自命不凡的傲气。",
+        "tier": 3,
+        "parent": "node_project_alpha",
+        "req_sed": 12,
+        "req_pride": 7,
+        "mutex_group": "sophomore_tech_choice",
+        "gain_entropy": 4
+    },
+    "choice_intern_big": {
+        "name": "寻找大厂实习",
+        "desc": "你决定去工业界看看。代码不是写在纸上的，是跑在服务器上的。你第一次感受到了996的节奏。",
+        "tier": 3,
+        "parent": "node_project_alpha",
+        "req_sed": 8,
+        "mutex_group": "sophomore_tech_choice",
+        "gain_money": 3000,
+        "gain_entropy": 3,
+        "comment": "【技术线】通往Bosch/Xuan剧情"
+    },
+    "choice_make_self_work": {
+        "name": "毕业就创业",
+        "desc": "你不想打工。你看着中关村创业大街的咖啡凉了又热。心里的躁动按捺不住。",
+        "tier": 3,
+        "parent": "node_project_alpha",
+        "req_entropy": 4,
+        "mutex_group": "sophomore_tech_choice",
+        "cost_money": 1000,
+        "gain_entropy": 3,
+        "comment": "【创业线】通往Hong/Mark剧情"
+    },
+    "choice_streamer_debut": {
+        "name": "尝试直播出道",
+        "desc": "你买了一套声卡和补光灯。第一次面对镜头，你听到了心跳的声音。去他的C++，我要做偶像。",
+        "tier": 3,
+        "parent": "node_maid_cafe_parttime",
+        "req_charm": 6,
+        "gain_money": 2000,
+        "gain_charm": 8,
+        "cost_stress": 40,
+        "comment": "【乌拉线】高压高魅力。数据焦虑开始显现。"
+    },
+    "choice_civil_prep": {
+        "name": "备考公务员/选调",
+        "desc": "你看着往届的录用名单。这是一条千军万马的独木桥，但岸上是“稳定”。你试图寻找一种不会过时的生活。",
+        "tier": 3,
+        "parent": "node_project_final_term",
+        "req_sed": 10,
+        "gain_security": 5,
+        "cost_stress": 20,
+        "comment": "【躺平线前置】"
+    },
+    "choice_ielts": {
+        "name": "雅思托福",
+        "desc": "【高眼界解锁】你透过图书馆的窗户，看到了大洋彼岸。这是一条昂贵但广阔的路。",
+        "tier": 3,
+        "parent": "node_project_final_term",
+        "req_entropy": 5,
+        "mutex_group": "sophomore_academic_choice",
+        "cost_money": 5000,
+        "gain_entropy": 4
+    },
+    "choice_startup_core_wp": {
+        "name": "跟Hong 创业 (WP)",
+        "desc": "决定跟 Hong 做 Windows Phone 开发。他说这是下一个十年的风口。你信了，毕竟他是班长。",
+        "tier": 4,
+        "parent": "choice_make_self_work",
+        "location_bind": "DORM",
+        "gain_money": 1000,
+        "gain_sed": 0,
+        "comment": "【陷阱】有钱无沉淀。你只是他的杠杆。"
+    },
+    "choice_startup_core_game": {
+        "name": "跟Mark 创业 (Indie)",
+        "desc": "决定跟 Mark 做独立游戏。没有工资，只有泡面和梦想。你觉得这才叫活着。",
+        "tier": 4,
+        "parent": "choice_make_self_work",
+        "location_bind": "LAB",
+        "cost_money": 500,
+        "gain_sed": 8,
+        "gain_entropy": 3,
+        "comment": "【理想主义】高沉淀，为分崩离析做铺垫"
+    },
+    "choice_startup_core": {
+        "name": "踏入社会当牛马",
+        "desc": "博世(Bosch)给你发来了邀请。是时候把大厂实习的经验变现了。虽然是外企，但也得卷。",
+        "tier": 4,
+        "parent": "choice_intern_big",
+        "req_sed": 15,
+        "location_bind": "LAB",
+        "gain_money": 8000,
+        "gain_sed": 5,
+        "cost_stress": 40,
+        "comment": "【技术线正途】你的亲身经历"
+    },
+    "choice_fulltime_streamer": {
+        "name": "全职UP主/主播",
+        "desc": "你拒绝了朝九晚五。你的工位是那把粉色的电竞椅。黑粉和真爱粉一样多。",
+        "tier": 4,
+        "parent": "choice_streamer_debut",
+        "req_charm": 15,
+        "gain_money": 15000,
+        "gain_pride": 8,
+        "comment": "【乌拉线高潮】"
+    },
+    "choice_return_hometown": {
+        "name": "回老家上岸",
+        "desc": "朝九晚五，两点一线。父母很满意，你在这个小城里拥有了名字。大城市的喧嚣与你无关了。",
+        "tier": 4,
+        "parent": "choice_civil_prep",
+        "gain_security": 20,
+        "cost_stress": -50,
+        "comment": "【躺平结局】压力清零，这就是你的断舍离。"
+    },
+    "choice_study_abroad": {
+        "name": "拿到Offer(出国)",
+        "desc": "图书馆闭馆时的音乐你听了无数遍。现在，你要去听大本钟的钟声了。",
+        "tier": 4,
+        "parent": "choice_ielts",
+        "req_sed": 20,
+        "location_bind": "LIB"
+    },
+    "hong_target_sale": {
+        "name": "资本的杠杆",
+        "desc": "Hong 看着下滑的数据并不慌张。他私下跟你说：'做产品不是为了改变世界，是为了被巨头收购。' 原来你只是他的筹码。",
+        "tier": 5,
+        "parent": "choice_startup_core_wp",
+        "location_bind": "LAB",
+        "gain_money": 8000,
+        "gain_sed": 2,
+        "comment": "【Hong结局】"
+    },
+    "back_to_society": {
+        "name": "分崩离析",
+        "desc": "游戏火了，团队散了。Xuan 私藏公章被逐出，兄弟情谊荡然无存。你看着沉默的 Mark，怀疑这是否也是一种计算。",
+        "tier": 5,
+        "parent": "choice_startup_core_game",
+        "location_bind": "LAB",
+        "cost_stress": 50,
+        "gain_sed": 10,
+        "comment": "【Mark结局】理想主义的代价"
+    },
+    "b_core_seninor_dev": {
+        "name": "B家核心技术大佬",
+        "desc": "你没有高学历，但你解决了最难的Bug。连研究生都来请教你。你证明了'沉淀'比'Title'更重要。",
+        "tier": 5,
+        "parent": "choice_startup_core",
+        "req_sed": 40,
+        "location_bind": "LAB",
+        "gain_money": 6000,
+        "gain_security": 5,
+        "gain_pride": 5,
+        "comment": "【技术逆袭】"
+    },
+    "choice_study_abroad_find_work": {
+        "name": "海归求职",
+        "desc": "国外镀金结束。回国后发现，HR 好像不怎么认这个学校了。海归变海带。",
+        "tier": 5,
+        "parent": "choice_study_abroad",
+        "location_bind": "LAB",
+        "gain_sed": 2,
+        "cost_stress": 20
+    },
+    "end_top_influencer": {
+        "name": "结局：顶流的代价",
+        "desc": "你拒绝了朝九晚五。你的工位是那把粉色的电竞椅。黑粉和真爱粉一样多，你开始习惯在深夜失眠。",
+        "tier": 5,
+        "parent": "choice_fulltime_streamer",
+        "req_charm": 30,
+        "req_pride": 8,
+        "comment": "【乌拉线结局】"
+    },
+    "big_amount_interview": {
+        "name": "海投找Offer",
+        "desc": "学历只是敲门砖。你在面试室推门进去，发现面试官是当年的老同学。",
+        "tier": 6,
+        "parent": "choice_study_abroad_find_work",
+        "req_sed": 10,
+        "location_bind": "LAB",
+        "cost_stress": 30,
+        "gain_money": 3000,
+        "comment": "【海归尴尬结局】"
+    },
+    "b_core_staff_dev": {
+        "name": "B家 Tech Lead",
+        "desc": "你开始带团队了。你面试了一个同济的硕士，但他好像只会背八股文。你叹了口气，想起了当年的自己。",
+        "tier": 6,
+        "parent": "b_core_seninor_dev",
+        "req_sed": 60,
+        "location_bind": "LAB",
+        "gain_money": 10000,
+        "gain_security": 10,
+        "gain_pride": 10,
+        "comment": "【沉淀流真结局】"
+    }
+};
+
+    let network = null;
+    let selectedNodeId = null;
+
+    // === 初始化 ===
+    window.onload = function() {
+        drawGraph();
+    };
+
+    // === 绘制图表 ===
+    function drawGraph() {
+        let nodes = [];
+        let edges = [];
+
+        for (let key in rawData) {
+            let item = rawData[key];
+            
+            // 节点颜色根据层级变化
+            let color = '#97c2fc';
+            if(item.tier === 0) color = '#ffb347'; // 根节点
+            if(item.tier === 4) color = '#88d8b0'; // 结局
+            if(item.comment && item.comment.includes("陷阱")) color = '#ff6961'; // 陷阱红色
+
+            nodes.push({
+                id: key,
+                label: item.name + `\n(T${item.tier})`,
+                level: item.tier,
+                shape: 'box',
+                color: { background: color, border: '#2B7CE9' },
+                font: { color: 'black' }
+            });
+
+            if (item.parent && rawData[item.parent]) {
+                edges.push({
+                    from: item.parent,
+                    to: key,
+                    arrows: 'to',
+                    color: { color: '#848484' }
+                });
+            }
+        }
+
+        let container = document.getElementById('network-container');
+        let data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+        let options = {
+            layout: {
+                hierarchical: {
+                    direction: "UD", // 从上到下
+                    sortMethod: "directed",
+                    levelSeparation: 150,
+                    nodeSpacing: 200
+                }
+            },
+            physics: false, // 关闭物理引擎，保持层级固定
+            interaction: {
+                dragNodes: true,
+                zoomView: true,
+                dragView: true
+            }
+        };
+
+        network = new vis.Network(container, data, options);
+
+        // 点击事件
+        network.on("click", function (params) {
+            if (params.nodes.length > 0) {
+                selectNode(params.nodes[0]);
+            } else {
+                deselectNode();
+            }
+        });
+
+        // 右键事件 (添加节点)
+        network.on("oncontext", function (params) {
+            params.event.preventDefault();
+            // 简单实现：右键直接添加一个子节点
+            let nodeId = params.nodes.length > 0 ? params.nodes[0] : null;
+            if(nodeId) {
+                // 如果右键在节点上，什么都不做或者弹出菜单（这里简化处理）
+            } else {
+                // 右键在空白处
+                addNewNode();
+            }
+        });
+    }
+
+    // === 选择节点逻辑 ===
+    function selectNode(id) {
+        selectedNodeId = id;
+        document.getElementById('form-container').style.display = 'block';
+        document.getElementById('btn-container').style.display = 'flex';
+        document.getElementById('empty-state').style.display = 'none';
+        document.getElementById('selected-node-id').innerText = id;
+
+        let data = rawData[id];
+        
+        // 填充表单
+        document.getElementById('node-id').value = id;
+        document.getElementById('node-name').value = data.name || "";
+        document.getElementById('node-desc').value = data.desc || "";
+        document.getElementById('node-tier').value = data.tier !== undefined ? data.tier : 0;
+        document.getElementById('node-parent').value = data.parent || "";
+        
+        // 需求
+        document.getElementById('req-entropy').value = data.req_entropy || "";
+        document.getElementById('req-money').value = data.req_money || "";
+        document.getElementById('req-sed').value = data.req_sed || "";
+        document.getElementById('node-mutex').value = data.mutex_group || "";
+
+        // 收益代价
+        document.getElementById('cost-stress').value = data.cost_stress || "";
+        document.getElementById('cost-money').value = data.cost_money || "";
+        document.getElementById('gain-sed').value = data.gain_sed || "";
+        document.getElementById('gain-progress').value = data.gain_progress || "";
+        document.getElementById('gain-entropy').value = data.gain_entropy || "";
+        document.getElementById('trait-reward').value = data.trait_reward || "";
+        
+        document.getElementById('node-comment').value = data.comment || "";
+    }
+
+    function deselectNode() {
+        selectedNodeId = null;
+        document.getElementById('form-container').style.display = 'none';
+        document.getElementById('btn-container').style.display = 'none';
+        document.getElementById('empty-state').style.display = 'block';
+        document.getElementById('selected-node-id').innerText = "未选择";
+    }
+
+    // === 更新数据 ===
+    window.updateNodeData = function() {
+        if (!selectedNodeId) return;
+
+        let data = rawData[selectedNodeId];
+        
+        // 获取值
+        data.name = document.getElementById('node-name').value;
+        data.desc = document.getElementById('node-desc').value;
+        data.tier = parseInt(document.getElementById('node-tier').value) || 0;
+        
+        let parentVal = document.getElementById('node-parent').value;
+        if(parentVal && parentVal.trim() !== "") data.parent = parentVal.trim();
+        else delete data.parent;
+
+        // 辅助函数：更新数值字段
+        const updateInt = (field, id) => {
+            let val = document.getElementById(id).value;
+            if(val !== "") data[field] = parseInt(val);
+            else delete data[field];
+        }
+        const updateStr = (field, id) => {
+            let val = document.getElementById(id).value;
+            if(val !== "") data[field] = val;
+            else delete data[field];
+        }
+
+        updateInt('req_entropy', 'req-entropy');
+        updateInt('req_money', 'req-money');
+        updateInt('req_sed', 'req-sed');
+        updateStr('mutex_group', 'node-mutex');
+
+        updateInt('cost_stress', 'cost-stress');
+        updateInt('cost_money', 'cost-money');
+        updateInt('gain_sed', 'gain-sed');
+        updateInt('gain_progress', 'gain-progress');
+        updateInt('gain_entropy', 'gain-entropy');
+        updateStr('trait_reward', 'trait-reward');
+        updateStr('comment', 'node-comment');
+
+        // 实时更新图表上的 Label 和 层级
+        // 性能考虑：这里直接全重绘比较简单，数据量小不卡
+        // 稍微防抖一下更好，但这里直接重绘吧
+        // 为了不打断输入，我们只更新数据集，不重绘整个 layout
+        // TODO: 真正的实时更新需要 DataSet.update
+    }
+
+    // 添加一个失去焦点时重绘图表的监听，以免输入时图表乱跳
+    document.getElementById('sidebar').addEventListener('focusout', function() {
+        drawGraph();
+    });
+
+
+    // === 新增节点 ===
+    window.addNewNode = function() {
+        let newId = prompt("请输入新节点 ID (例如 node_new_skill):", "node_new");
+        if (newId && !rawData[newId]) {
+            rawData[newId] = {
+                name: "新节点",
+                desc: "描述...",
+                tier: 0
+            };
+            drawGraph();
+            // 自动选中
+            // 需要一点延时等 graph 渲染完
+            setTimeout(() => {
+                network.selectNodes([newId]);
+                selectNode(newId);
+            }, 100);
+        } else if (rawData[newId]) {
+            alert("ID 已存在！");
+        }
+    }
+
+    // === 删除节点 ===
+    window.deleteSelectedNode = function() {
+        if (!selectedNodeId) return;
+        if (confirm(`确定要删除 ${selectedNodeId} 吗？\n注意：如果有子节点，它们的父级关系会断开。`)) {
+            delete rawData[selectedNodeId];
+            deselectNode();
+            drawGraph();
+        }
+    }
+
+    // === 导出 JSON ===
+    window.exportJSON = function() {
+        let jsonStr = JSON.stringify(rawData, null, 4);
+        let blob = new Blob([jsonStr], {type: "application/json"});
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = "life_paths.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    // === 导入 JSON ===
+    window.importJSON = function(input) {
+        let file = input.files[0];
+        if(!file) return;
+        
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                rawData = JSON.parse(e.target.result);
+                drawGraph();
+                alert("导入成功！");
+            } catch(err) {
+                alert("JSON 格式错误，请检查文件。");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+</script>
+
+</body>
+</html>

@@ -1,32 +1,264 @@
 {
-	"path_programmer": {
-		"name": "全栈工程师",
-		"desc": "掌握核心技术，成为赛博时代的建筑师。",
-		"req_entropy": 3
+	"root_freshman": {
+		"name": "大学开篇",
+		"desc": "2015年的夏天。你提着行李箱站在校门口，一切都是新的。",
+		"tier": 0,
+		"req_entropy": 0,
+		"gain_entropy": 1,
+		"gain_sed": 1
 	},
-	"path_indie_dev": {
-		"name": "独立开发者",
-		"desc": "不仅要有技术，还要有表达自我的勇气。",
-		"req_entropy": 6
+	"node_train_hard": {
+		"name": "大学军训",
+		"desc": "烈日当空。教官说：'掉皮掉肉不掉队'。这是你学会服从的第一课。",
+		"tier": 1,
+		"parent": "root_freshman",
+		"req_entropy": 0,
+		"location_bind": "DORM",
+		"cost_stress": 20,
+		"gain_sed": 2,
+		"comment": "高 Pride 的人会在这里受到大量 Stress 伤害 (EGO类型伤害)"
 	},
-	"path_sales": {
-		"name": "金牌销售",
-		"desc": "看透人性的弱点，用话术换取财富。",
-		"req_entropy": 2
+	"node_project_final_term": {
+		"name": "期末考试周",
+		"desc": "图书馆凌晨三点的灯光。为了绩点(GPA)而战，你知道保研名额只留给前5%。",
+		"tier": 2,
+		"parent": "node_train_hard",
+		"req_entropy": 0,
+		"location_bind": "LIB",
+		"cost_stress": 25,
+		"gain_sed": 5,
+		"comment": "基础压力很大，高收益沉淀"
 	},
-	"path_scholar": {
-		"name": "学术深造",
-		"desc": "在象牙塔尖探索人类认知的边界。",
-		"req_entropy": 8
+	"node_school_out_work": {
+		"name": "校外兼职",
+		"desc": "穿上服务员的制服，低下高贵的头颅。虽然身体很累，但这笔生活费是你独立的证明。",
+		"tier": 2,
+		"parent": "node_train_hard",
+		"req_entropy": 0,
+		"location_bind": "CAFE",
+		"cost_stress": 15,
+		"gain_money": 2000,
+		"gain_sed": 1,
+		"comment": "【贫穷陷阱】高金钱回报，但沉淀值极低(1)，长期做会锁死后期的高端路径"
 	},
-	"path_crypto": {
-		"name": "Web3 投机者",
-		"desc": "在泡沫中冲浪，这是勇敢者的游戏。",
-		"req_entropy": 5
+	"node_project_alpha": {
+		"name": "大作业的疯狂",
+		"desc": "编程课的大作业。你是选择随便做做，还是把它做成一个真正的产品？",
+		"tier": 2,
+		"parent": "node_train_hard",
+		"req_entropy": 0,
+		"location_bind": "LAB",
+		"cost_stress": 30,
+		"gain_sed": 6,
+		"gain_entropy": 1,
+		"comment": "高压高回报，解锁后续技术线"
 	},
-	"path_home": {
-		"name": "回乡躺平",
-		"desc": "接受平凡，享受安宁。",
-		"req_entropy": 0
+	"node_cet_english": {
+		"name": "四六级通关",
+		"desc": "大学的硬通货。红宝书背了忘忘了背。",
+		"tier": 2,
+		"parent": "node_train_hard",
+		"req_entropy": 0,
+		"location_bind": "LIB",
+		"cost_stress": 10,
+		"gain_sed": 3,
+		"gain_security": 2
+	},
+	"choice_transfer_major": {
+		"name": "转专业/精英班",
+		"desc": "你盯着那个全校最牛的实验班。需要极高的成绩沉淀，和一点点自命不凡的傲气。",
+		"tier": 3,
+		"parent": "node_project_alpha",
+		"req_sed": 12,
+		"req_pride": 7,
+		"mutex_group": "sophomore_tech_choice",
+		"cost_stress": 40,
+		"gain_entropy": 4,
+		"comment": "高门槛：需要沉淀12+自尊7。收益：大幅提升眼界"
+	},
+	"choice_intern_big": {
+		"name": "寻找大厂实习",
+		"desc": "你决定去工业界看看。代码不是写在纸上的，是跑在服务器上的。",
+		"tier": 3,
+		"parent": "node_project_alpha",
+		"req_sed": 8,
+		"mutex_group": "sophomore_tech_choice",
+		"cost_stress": 20,
+		"gain_money": 3000,
+		"gain_entropy": 2,
+		"comment": "平衡选项：有钱有眼界，也是主流路线"
+	},
+	"choice_make_self_work": {
+		"name": "毕业就创业",
+		"desc": "你不想打工。你看着中关村创业大街的咖啡凉了又热。",
+		"tier": 3,
+		"parent": "node_project_alpha",
+		"req_entropy": 4,
+		"mutex_group": "sophomore_tech_choice",
+		"cost_money": 1000,
+		"gain_entropy": 3,
+		"comment": "需要一定眼界(4)才能开启，消耗金钱，高风险"
+	},
+	"choice_ielts": {
+		"name": "雅思托福",
+		"desc": "【高眼界解锁】你透过图书馆的窗户，看到了大洋彼岸。这是一条昂贵但广阔的路。",
+		"tier": 3,
+		"parent": "node_cet_english",
+		"req_entropy": 5,
+		"mutex_group": "sophomore_academic_choice",
+		"cost_money": 5000,
+		"cost_stress": 25,
+		"gain_entropy": 4,
+		"comment": "眼界门槛(5)，极高金钱消耗(-5000)"
+	},
+	"choice_postgrad_eng": {
+		"name": "考研英语",
+		"desc": "默认的道路。在这个越来越卷的时代，学历似乎是唯一的救命稻草。",
+		"tier": 3,
+		"parent": "node_cet_english",
+		"req_sed": 6,
+		"mutex_group": "sophomore_academic_choice",
+		"cost_stress": 20,
+		"gain_security": 5,
+		"comment": "稳健流：提升安全感"
+	},
+	"choice_startup_core_wp": {
+		"name": "跟Hong 创业 (WP)",
+		"desc": "决定跟 Hong 做 Windows Phone 开发。他说这是下一个十年的风口。",
+		"tier": 4,
+		"parent": "choice_make_self_work",
+		"location_bind": "DORM",
+		"gain_money": 1000,
+		"gain_sed": 0,
+		"comment": "【陷阱】有钱但无沉淀(0)，会锁死 Tier 5 的技术路线"
+	},
+	"choice_startup_core_game": {
+		"name": "跟Mark 创业 (Indie)",
+		"desc": "决定跟 Mark 做独立游戏。没有工资，只有泡面和梦想。",
+		"tier": 4,
+		"parent": "choice_make_self_work",
+		"location_bind": "LAB",
+		"cost_money": 500,
+		"gain_sed": 8,
+		"gain_entropy": 3,
+		"comment": "【厚积薄发】倒贴钱(-500)，但获得极高沉淀(8)"
+	},
+	"choice_startup_core": {
+		"name": "踏入社会当牛马",
+		"desc": "博世(Bosch)给你发来了邀请。是时候把大厂实习的经验变现了。",
+		"tier": 4,
+		"parent": "choice_intern_big",
+		"location_bind": "LAB",
+		"gain_money": 4000,
+		"gain_security": 5,
+		"gain_sed": 4,
+		"comment": "平衡发展：加钱加安全加沉淀"
+	},
+	"choice_study_abroad": {
+		"name": "拿到Offer(出国)",
+		"desc": "图书馆闭馆时的音乐你听了无数遍。现在，你要去听大本钟的钟声了。",
+		"tier": 4,
+		"parent": "choice_ielts",
+		"req_sed": 15,
+		"location_bind": "LIB",
+		"cost_money": 10000,
+		"gain_entropy": 5,
+		"comment": "极高金钱消耗(-10000)，换取最高眼界提升"
+	},
+	"choice_postgrad_exam": {
+		"name": "考研/考公上岸",
+		"desc": "千军万马过独木桥。需要海量的沉淀值才能通关。",
+		"tier": 4,
+		"parent": "choice_postgrad_eng",
+		"req_sed": 25,
+		"location_bind": "LIB",
+		"cost_stress": 40,
+		"gain_security": 10,
+		"comment": "高沉淀门槛(25)，换取最高安全感"
+	},
+	"hong_target_sale": {
+		"name": "资本的杠杆",
+		"desc": "Hong 看着下滑的数据并不慌张。'做产品不是为了改变世界，是为了被巨头收购。'",
+		"tier": 5,
+		"parent": "choice_startup_core_wp",
+		"location_bind": "LAB",
+		"gain_money": 8000,
+		"gain_sed": 2,
+		"comment": "Hong 路线结局：钱多沉淀少"
+	},
+	"back_to_society": {
+		"name": "分崩离析",
+		"desc": "游戏火了，团队散了。Xuan 私藏公章被逐出。你看着沉默的 Mark，怀疑这是否也是一种计算。",
+		"tier": 5,
+		"parent": "choice_startup_core_game",
+		"location_bind": "LAB",
+		"cost_stress": 50,
+		"gain_sed": 10,
+		"comment": "Mark 路线转折：巨额压力，但换来人生阅历(沉淀+10)"
+	},
+	"choice_study_abroad_find_work": {
+		"name": "海归求职",
+		"desc": "国外镀金结束。回国后发现，HR 好像不怎么认这个学校了。",
+		"tier": 5,
+		"parent": "choice_study_abroad",
+		"location_bind": "LAB",
+		"gain_sed": 2,
+		"cost_stress": 20
+	},
+	"choice_study_abroad_to_phD": {
+		"name": "继续读博",
+		"desc": "你觉得还是学校里安全。外面的世界太吵了。",
+		"tier": 5,
+		"parent": "choice_study_abroad",
+		"req_sed": 20,
+		"location_bind": "LIB",
+		"cost_money": 2000,
+		"gain_entropy": 3
+	},
+	"b_core_seninor_dev": {
+		"name": "B家核心技术大佬",
+		"desc": "你没有高学历，但你解决了最难的Bug。连研究生都来请教你。",
+		"tier": 5,
+		"parent": "choice_startup_core",
+		"req_sed": 40,
+		"location_bind": "LAB",
+		"gain_money": 6000,
+		"gain_security": 5,
+		"gain_pride": 5,
+		"comment": "逆袭路线：需要极高沉淀(40)才能解锁，回报丰厚"
+	},
+	"big_amount_interview": {
+		"name": "海投找Offer",
+		"desc": "你在面试室推门进去，发现面试官是当年的老同学。",
+		"tier": 6,
+		"parent": "choice_study_abroad_find_work",
+		"req_sed": 10,
+		"location_bind": "LAB",
+		"cost_stress": 30,
+		"gain_money": 3000,
+		"comment": "海归尴尬结局：收益平平，压力巨大"
+	},
+	"b_core_staff_dev": {
+		"name": "B家 Tech Lead",
+		"desc": "你开始带团队了。你面试了一个同济的硕士，但他好像只会背八股文。",
+		"tier": 6,
+		"parent": "b_core_seninor_dev",
+		"req_sed": 60,
+		"location_bind": "LAB",
+		"gain_money": 10000,
+		"gain_security": 10,
+		"gain_pride": 10,
+		"comment": "沉淀流真结局：各属性大丰收"
+	},
+	"big_amount_interviewphd": {
+		"name": "博士毕业找教职",
+		"desc": "非升即走。你拿着厚厚的论文集，在高校和企业之间犹豫。",
+		"tier": 6,
+		"parent": "choice_study_abroad_to_phD",
+		"req_sed": 50,
+		"location_bind": "LAB",
+		"cost_stress": 40,
+		"gain_security": 5,
+		"comment": "学术围城：高门槛，高压力，中等回报"
 	}
 }

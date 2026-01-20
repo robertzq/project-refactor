@@ -10,11 +10,13 @@ var project_progress: float = 0.0 # 项目进度 (影响通关)
 
 # [时间系统]
 var current_week: int = 1   # 当前周数 (1-2周为上半月，3-4周为下半月)
-var total_weeks: int = 24   # 假设玩半年 (24周)，或者一学期
+const WEEKS_PER_SETTLEMENT = 2  # 每 2 周结算一次
+signal time_advanced(week)      # 时间推进信号
 var current_cycle_log: Array = [] # 存储这半个月发生的所有事情（用于写周报）
 
 # [项目系统]
 const PROGRESS_GOAL = 100.0 # 目标
+var current_active_project_id: String = "" # 当前正在攻克的节点ID
 
 # [四大维度的核心参数]
 var fin_security: int = 5   # 家境 (P_fin): 提供金钱抗性
@@ -22,21 +24,35 @@ var pride: int = 5          # 自尊 (P_pride): 增加 EGO 伤害
 var entropy: int = 5        # 熵/视野: 影响工作难度
 var sensitivity: float = 1.0 # 敏感度 (P_sens): 全局伤害乘区
 var base_exec: float = 1.0  # 执行力基数 (E_base): 影响工作效率
-
+var is_in_breakdown: bool = false
 # [状态记录]
 var current_anxiety: float = 0.0 # 当前焦虑值
 var traits: Array = []           # 特质列表 (如 "背水一战", "卷王")
 var recovery_strategy: String = "Explorer" # <--- 【已补回】回血策略 (Extrovert/Introvert/Explorer)
 var is_employed: bool = false
-
+var current_study_buff: Dictionary = {}  # <--- 新增这一行
 var sedimentation: int = 0   # 沉淀值
+var day_progress: int = 0 # 新增：0-6 代表一周的每一天
 # 1. 定义信号 (通知 UI 刷新)
 signal vision_improved(new_entropy, message) # 当眼界提升时发出信号
 
 # 2. 定义阈值
 const SEDIMENTATION_THRESHOLD = 5 # 每积攒 5 点沉淀，提升 1 点眼界
-# --- ✅ 新增：人生路径数据库 (从 JSON 加载) ---
+
+# --- 新增：人生路径数据库 (从 JSON 加载) ---
 var life_path_db: Dictionary = {}
+var selected_paths: Array = []        # 已选择的路径 ID
+var active_mutex_groups: Array = []   # 已激活的互斥组 (如 "junior_choice")
+var current_archetype_code = ""
+# === 状态枚举 ===
+enum PathStatus {
+	HIDDEN = 0,      # 眼界不够，完全不可见
+	BLURRED = 1,     # 眼界快到了，或者是可见但条件不满足（迷雾）
+	AVAILABLE = 2,   # 条件满足，可选
+	IN_PROGRESS = 3, # 🔥 新增：正在攻克中
+	COMPLETED = 4,   # ✅ 改名：已彻底完成 (原 SELECTED)
+	LOCKED = 5       # 互斥锁死
+}
 # [日记系统]
 # 存储结构: [{ "type": "WORK", "val": 25, "desc": "死磕二叉树" }, ...]
 var journal_logs: Array = []
@@ -56,24 +72,52 @@ func init_character(archetype: String):
 	project_progress = 0
 	traits = []
 	recovery_strategy = "Explorer" # 默认值，会在火车问卷中被修改
-	
+	current_archetype_code  = archetype
+	is_in_breakdown = false
 	# 2. 根据出身设定初始数值
 	match archetype:
-		"STRIVER": # 小镇做题家
-			fin_security = 2
-			pride = 7
-			base_exec = 1.2
-			sensitivity = 1.2
-			money = 800
-			add_trait("卷王")
-			
-		"SLACKER": # 摆烂富二代
-			fin_security = 8
-			pride = 4
-			base_exec = 0.8
-			sensitivity = 0.9
+		# 1. 都会精英 (The Golden Child)
+		"ARCH_ELITE":
 			money = 5000
-			add_trait("松弛感")
+			fin_security = 8
+			pride = 6
+			entropy = 5 # 视野开阔，不需要太努力也能看到好路
+			add_trait("多才多艺") # 社交回血
+			add_trait("原生家庭") # 每月生活费+
+
+		# 2. 城市土著 (The Local Normie)
+		"ARCH_LOCAL":
+			money = 2000
+			fin_security = 5
+			pride = 4
+			entropy = 4 # 中规中矩
+			add_trait("本地人") # 周末回家回血
+
+		# 3. 霓虹暗面 (The Concrete Weed)
+		"ARCH_SURVIVOR":
+			money = 500
+			fin_security = 1
+			pride = 8
+			sensitivity = 1.5 # 高敏
+			entropy = 3 # 虽穷，但见识过社会残酷，比做题家稍微懂点
+			add_trait("早熟") # 打工减焦虑
+
+		# 4. 县城显贵 (The County Star)
+		"ARCH_COUNTY_STAR":
+			money = 4000
+			fin_security = 7
+			pride = 9 # 极高自尊
+			entropy = 2 # 信息闭塞，容易盲目自信
+			add_trait("宁做鸡头")
+
+		# 5. 错位过客 (The Disillusioned Striver) - 主角模板
+		"ARCH_STRIVER":
+			money = 800
+			fin_security = 3
+			base_exec = 1.3 # 执行力极强
+			pride = 7
+			entropy = 1 # 开局眼界极低！只知道死读书！
+			add_trait("意难平") # 没拿第一就焦虑
 			
 		_: # 默认 (Default)
 			fin_security = 5
@@ -81,6 +125,8 @@ func init_character(archetype: String):
 			base_exec = 1.0
 			sensitivity = 1.0
 			money = 2000
+	
+	print("初始眼界: ", entropy, " | 初始家境: ", fin_security)
 
 # ==============================================================================
 # 3. 核心数学公式 (The Soul Algorithm v3.2)
@@ -95,96 +141,193 @@ func get_max_anxiety_limit() -> float:
 	return 80.0 * base_exec
 
 # [3.3] 获取当前工作效率 (Efficiency)
+# 决定项目推进的快慢：Eff = Base * SeatBuff * Curses
 func get_efficiency() -> Dictionary:
 	var final_eff = base_exec
-	var curse = "无"
+	var active_factors = [] # 用于记录生效的 Buff/Curse 名称
 	
-	# 简单的诅咒判定示例
+	# --- A. 图书馆座位 Buff (乘区) ---
+	if not current_study_buff.is_empty() and current_study_buff.has("eff_mod"):
+		var seat_mod = current_study_buff["eff_mod"]
+		final_eff *= seat_mod
+		if seat_mod != 1.0:
+			active_factors.append("座位(x%.2f)" % seat_mod)
+
+	# --- B. 诅咒与状态修正 ---
+	var boldness = get_boldness()
+	
+	# 1. [安逸诅咒] (Comfort Curse)
+	# 富人太舒服了不想动 (家境好且无压力)
 	if fin_security > 7 and current_anxiety < 30:
 		final_eff *= 0.7
-		curse = "安逸诅咒"
-	elif get_boldness() < 4.0:
-		final_eff *= 0.8
-		curse = "胆怯诅咒"
+		active_factors.append("安逸诅咒")
 		
-	return {"value": final_eff, "curse": curse}
+	# 2. [胆怯诅咒] (Cowardice Curse)
+	# 吓破胆了缩手缩脚 (胆量过低)
+	elif boldness < 4.0:
+		final_eff *= 0.8
+		active_factors.append("胆怯诅咒")
+	
+	# 3. [惊慌卷王] (Panic Striver) - 策划案 v3.2 新增
+	# 拥有【背水一战】特质，且处于高压状态时，效率反而爆发
+	if current_anxiety > 80 and "背水一战" in traits:
+		final_eff *= 1.2
+		active_factors.append("背水一战")
 
-# [3.4] 压力结算核心公式
-# base_val: 基础数值
+	return {
+		"value": final_eff, 
+		"desc": ", ".join(active_factors) if active_factors.size() > 0 else "正常"
+	}
+
+# [3.4] 压力结算核心公式 (Anxiety Logic)
+# base_val: 基础数值 (通常为 10, 25, 45, 70)
 # type: 类型 (MONEY, EGO, GEN, STUDY, WORK)
-# is_working: 是否处于兼职/工作状态 (影响避难所判定)
 func apply_stress(base_val: float, type: String, is_working: bool = false) -> Dictionary:
 	
-	# --- A. 回血逻辑 (负数) ---
+	# --- A. 回血逻辑 (数值 < 0) ---
+	# (保持原有逻辑不变，此处省略，直接使用你现有的代码即可)
 	if base_val < 0:
-		# 可以在这里加入 recovery_strategy 的判断逻辑
-		# 比如: 如果是 Extrovert 且 type=="SOCIAL"，回血加倍
-		var heal_amount = base_val
-		
-		# 简单示例: 高敏感的人回血也快
-		heal_amount *= sensitivity
-		
+		var heal_amount = base_val * sensitivity # 高敏回血也快
 		current_anxiety += heal_amount
 		if current_anxiety < 0: current_anxiety = 0
-		print(">> [Global] 治愈: %.1f | 当前焦虑: %.1f" % [heal_amount, current_anxiety])
+		print(">> [Global] 治愈: %.1f" % heal_amount)
 		return {"damage": heal_amount, "current_anxiety": current_anxiety}
 
-	# --- B. 扣血逻辑 (正数) ---
+	# --- B. 扣血逻辑 (数值 > 0) ---
 	
-	# Step 1: 计算原始压力 (Omega)
-	var omega = base_val
-	var log_reason = ""
+	# Step 0: 计算修正后的基础值 (Modified Base)
+	# 关键修复：座位带来的压力(如角落位+5)应视为基础值的一部分
+	var modified_base = base_val
+	var log_prefix = ""
+	
+	if not current_study_buff.is_empty() and current_study_buff.has("stress_fix"):
+		var seat_fix = current_study_buff["stress_fix"]
+		modified_base += seat_fix
+		if seat_fix != 0:
+			log_prefix = "[座位%+d] " % seat_fix
+			
+	# Step 1: 根据类型应用公式 (Omega Calculation)
+	var omega = 0.0
+	var log_reason = "通用"
 	
 	match type:
 		"MONEY":
-			# 没钱时伤害巨高：基础值 - (家境 * 2.0)
-			# 例如：家境2，减免4；家境8，减免16
-			omega = base_val - (fin_security * 2.0)
-			log_reason = "家境修正"
+			# 公式: Base - (家境 * 2.0)
+			# 穷人重伤，富人无视
+			omega = modified_base - (fin_security * 2.0)
+			log_reason = "金钱事件"
 			
 		"EGO":
-			# 自尊越高伤害越高：基础值 + (自尊 * 0.5)
-			omega = base_val + (pride * 0.5)
-			log_reason = "自尊修正"
+			# 公式: Base + (自尊 * 0.5)
+			# 自尊越高，面子受损越痛
+			omega = modified_base + (pride * 0.5)
+			log_reason = "自尊事件"
 		
 		"WORK", "STUDY":
-			# 熵越高(迷茫)，做同样的事越累
-			# 公式: 基础值 * (0.8 + 熵 * 0.05)
-			# 例: 熵5 -> 1.05倍; 熵10 -> 1.3倍; 熵0 -> 0.8倍
+			# 公式: Base * (0.8 + 熵 * 0.05)
+			# 熵越高(想太多/眼高手低)，做同样的事越累
+			# 熵5(正常) -> x1.05
+			# 熵1(做题家) -> x0.85 (心无旁骛)
 			var entropy_mult = 0.8 + (entropy * 0.05)
-			omega = base_val * entropy_mult
-			log_reason = "认知修正(熵%d)" % entropy
+			omega = modified_base * entropy_mult
+			log_reason = "认知修正(x%.2f)" % entropy_mult
+		
+		"STATUS", "GEN": 
+			# 状态类/通用类压力
+			# 可以设定为受 entropy 影响，或者直接就是 base_val
+			omega = modified_base
+			log_reason = "基础生存压力"
 				
 		_:
-			omega = base_val
-			log_reason = "通用"
+			omega = modified_base
 
-	# Step 2: 避难所修正 (穷人打工保护机制)
-	if is_employed and fin_security < 3:
-		omega -= 8.0
-		log_reason += "+避难所"
+	# Step 2: 避难所修正 (Refuge Bonus)
+	# 策划案 v3.2: 修正值由 5 提升至 8
+	if is_working and fin_security < 3:
+		omega -= 8.0 
+		log_reason += "+打工避难"
 	
-	if omega < 0: omega = 0 # 伤害不能为负
+	if omega < 0: omega = 0 # 伤害底限
 
-	# Step 3: 全局敏感度放大
+	# Step 3: 全局敏感度放大 (Sensitivity)
 	var final_damage = omega * sensitivity
 	
 	# 应用结果
 	current_anxiety += final_damage
+	var is_broken = current_anxiety >= get_max_anxiety_limit()
 	
-	# 打印战斗日志
+	if is_broken:
+		trigger_breakdown()
+
+	# 打印详细战斗日志 (Debug)
 	print("---------------------------------------")
-	print("🩸 [Global] 压力结算 (%s)" % type)
-	print("   公式: (基础%.0f -> 修正%.1f [%s]) x 敏感%.1f = 最终%.1f" % [base_val, omega, log_reason, sensitivity, final_damage])
+	print("   [Global] 压力结算 (%s)" % type)
+	print("   基础: %.0f %s-> 修正后基础: %.0f" % [base_val, log_prefix, modified_base])
+	print("   公式: %.0f [%s] x 敏感(%.1f) = 最终伤害 %.1f" % [omega, log_reason, sensitivity, final_damage])
 	print("   当前焦虑: %.1f / %.1f" % [current_anxiety, get_max_anxiety_limit()])
 	print("---------------------------------------")
 
 	return {
 		"damage": final_damage,
 		"current_anxiety": current_anxiety,
-		"is_breakdown": current_anxiety >= get_max_anxiety_limit()
+		"is_breakdown": is_broken
 	}
 
+# [3.5] 辅助：检查是否分心
+# 返回 true 表示分心了，false 表示专注
+func check_is_distracted() -> bool:
+	var final_chance = 0.05 # 基础分心率 5%
+	
+	# 叠加座位的分心风险 (例如靠窗位 +25% -> 0.30)
+	if not current_study_buff.is_empty():
+		final_chance += current_study_buff.get("distraction_chance", 0.0)
+	
+	# 进行判定
+	var roll = randf()
+	var is_distracted = roll < final_chance
+	
+	if is_distracted:
+		print(">> [Global] 哎呀！分心了！(Roll: %.2f < 阈值: %.2f)" % [roll, final_chance])
+	
+	return is_distracted
+	
+func trigger_breakdown():
+	# 🔥 防止重复触发 (如果已经锁了，就直接返回)
+	if is_in_breakdown: 
+		return
+	
+	# 🔥 上锁！
+	is_in_breakdown = true
+	print(">>> ⚠️ 玩家崩溃！ <<<")
+	
+	# 1. 记录日志
+	record_journal("BREAKDOWN", 0, "精神崩溃")
+	log_story("【崩溃】那根紧绷的弦终于断了... 你在医院昏睡了三天。")
+	
+	# 2. 数值惩罚 (方案 A)
+	# 焦虑减半，作为休息后的恢复
+	current_anxiety = get_max_anxiety_limit() * 0.5
+	
+	# 进度倒退 10%，且最低不低于 0
+	var penalty = 10.0
+	project_progress = max(0.0, project_progress - penalty)
+	print(">> [System] 崩溃惩罚：进度倒退 %.1f%%" % penalty)
+	
+	# 3. 场景转场 (核心修改)
+	# 使用 call_deferred 安全地切换到崩溃场景
+	call_deferred("_switch_to_breakdown_scene")
+
+# 内部函数：执行场景切换
+func _switch_to_breakdown_scene():
+	# 确保路径正确，请检查你的 bkend.tscn 是否在这个目录下
+	var path = "res://_Scenes/bkend.tscn" 
+	
+	if ResourceLoader.exists(path):
+		get_tree().change_scene_to_file(path)
+	else:
+		printerr("❌ 找不到崩溃场景: ", path)
+	
+	
 # ==============================================================================
 # 4. 辅助工具
 # ==============================================================================
@@ -246,7 +389,7 @@ func load_life_paths_from_json(path: String):
 func trigger_epiphany(level_gain: int):
 	# 提升眼界 (Entropy)
 	# 设定里: Entropy 代表"视野半径"。数值越大，能看到的节点越远。
-	entropy += level_gain 
+	entropy += level_gain
 	
 	var msg = "灵光一闪！经过长时间的沉淀，你的眼界提升了！(视野 +%d)" % level_gain
 	print("✨✨✨ " + msg + " ✨✨✨")
@@ -283,15 +426,6 @@ func log_story(text: String):
 	current_cycle_log.append(text)
 	print(">> [Story] 记录: ", text)
 
-# --- 新增：推进时间 ---
-func advance_time():
-	current_week += 1
-	print(">> [Time] 进入第 %d 周" % current_week)
-	
-	# 检查是否到了半月结算点 (每2周一次，即第2, 4, 6...周结束时)
-	if current_week % 2 != 0: # 奇数周(第3周)刚开始，说明偶数周(第2周)刚结束
-		return true # 需要结算
-	return false
 	
 # --- 记录日记的接口 ---
 func record_journal(type: String, val: float, desc: String):
@@ -305,3 +439,151 @@ func record_journal(type: String, val: float, desc: String):
 # --- 清空日记 (每半月调用) ---
 func clear_journal():
 	journal_logs.clear()
+
+
+# --- 3. 选择路径 ---
+func select_path(path_id: String):
+	if get_path_status(path_id) != PathStatus.AVAILABLE:
+		return
+		
+	print(">>> 选择了人生路径: ", path_id)
+	selected_paths.append(path_id)
+	
+	var data = life_path_db[path_id]
+	
+	# 激活互斥锁
+	if data.has("mutex_group"):
+		active_mutex_groups.append(data["mutex_group"])
+		
+	# 扣除代价 (示例)
+	if data.has("cost_money"): money -= data["cost_money"]
+	if data.has("cost_stress"): apply_stress(data["cost_stress"], "WORK")
+	
+	# 获得收益 (示例)
+	if data.has("gain_sed"): add_sedimentation(data["gain_sed"])
+	
+# --- 时间推进逻辑 ---
+# 修改 advance_time，让它支持“天”的流逝
+func advance_time(days_passed: int = 1) -> bool:
+	day_progress += days_passed
+	print(">> [Time] 过了 %d 天" % days_passed)
+	
+	if day_progress >= 7:
+		day_progress = 0
+		current_week += 1
+		print(">> [Time] 新的一周！当前是第 %d 周" % current_week)
+		emit_signal("time_advanced", current_week)
+		
+		# 检查半月结算 (每2周)
+		if (current_week - 1) % WEEKS_PER_SETTLEMENT == 0:
+			return true # 需要结算
+			
+	return false # 不需要结算
+
+# --- 路径状态检查 (更新) ---
+func get_path_status(path_id: String) -> int:
+	if not life_path_db.has(path_id): return PathStatus.HIDDEN
+	
+	# 1. 已经彻底完成的
+	if path_id in selected_paths:
+		return PathStatus.COMPLETED
+	
+	# 2. 🔥 正在做的
+	if path_id == current_active_project_id:
+		return PathStatus.IN_PROGRESS
+		
+	var data = life_path_db[path_id]
+	var req_entropy = data.get("req_entropy", 0)
+	var mutex = data.get("mutex_group", "")
+	
+	# 3. 互斥锁死
+	if mutex != "" and mutex in active_mutex_groups:
+		return PathStatus.LOCKED
+	
+	# 4. 迷雾逻辑
+	if entropy < req_entropy - 2: return PathStatus.HIDDEN
+	if entropy < req_entropy: return PathStatus.BLURRED
+	
+	# 5. 父节点检查 (必须父节点COMPLETED才能选子节点)
+	if data.has("parent"):
+		if data["parent"] not in selected_paths:
+			return PathStatus.BLURRED
+			
+	return PathStatus.AVAILABLE
+
+var current_project_location: String = "" # 记录当前项目需要在哪里做
+
+func start_project(path_id: String):
+	current_active_project_id = path_id
+	project_progress = 0.0
+	
+	# 从 DB 获取地点绑定
+	var data = life_path_db[path_id]
+	current_project_location = data.get("location_bind", "LIB") # 默认图书馆
+	
+	print(">>> 立项成功: %s (需前往: %s)" % [data["name"], current_project_location])
+
+func check_project_completion() -> bool:
+	if current_active_project_id == "": return false
+	
+	# 🔥 核心修复：这里应该是 >= 100.0
+	if project_progress >= 100.0:
+		project_progress = 100.0 # 锁死
+		complete_active_project() # 结算
+		return true
+		
+	return false
+
+func complete_active_project():
+	var id = current_active_project_id
+	print(">>> 🎉 项目完成: ", id)
+	
+	# 1. 加入已完成列表 (这样它的子节点就不再是 BLURRED 了)
+	if id not in selected_paths:
+		selected_paths.append(id)
+	
+	# 2. 奖励结算
+	var data = life_path_db[id]
+	if data.has("gain_entropy"): 
+		entropy += data["gain_entropy"]
+		print("✨ 获得奖励: 眼界 +%d" % data["gain_entropy"])
+		
+	# 3. 清空当前项目 (让玩家可以选新的)
+	current_active_project_id = ""
+	project_progress = 0.0
+	
+	# 4. 通知 UI 刷新 (重要！)
+	# 你之前的代码里可能叫 vision_improved，建议复用这个信号
+	emit_signal("vision_improved", entropy, "项目【%s】已完成！" % data["name"])
+
+func show_settlement():
+	# 延迟一点点，等当前事件框关掉
+	await get_tree().create_timer(0.5).timeout
+	
+	var settlement = load("res://_Scenes/UI_Settlement.tscn").instantiate()
+	# 假设 UI_Settlement 会自动添加到 CanvasLayer
+	get_tree().root.add_child(settlement)
+	settlement.setup_report() # 生成报告
+
+
+# --- 辅助：清理 Buff (重要！) ---
+# 每次离开图书馆或结算完成后必须调用
+func clear_study_buff():
+	if not current_study_buff.is_empty():
+		print(">> [Global] 离开座位，Buff失效。")
+		current_study_buff.clear()
+		
+var relations: Dictionary = {}
+
+# 更新人际关系
+func update_relation(npc_id: String, val: int):
+	if not relations.has(npc_id): relations[npc_id] = 0
+	relations[npc_id] += val
+	print(">> [Relation] %s 关系变化: %+d (当前: %d)" % [npc_id, val, relations[npc_id]])
+
+# 解锁隐藏路径 (对应 path_branch)
+func unlock_hidden_path(branch_id: String):
+	# 简单实现：将某个路径的条件设为满足，或者直接加入 unlocked 列表
+	# 这里假设我们在 life_paths.json 里并没有真的做分支逻辑，
+	# 暂时先打印日志，或者给点奖励
+	log_story("命运的分歧点：你选择了 [%s]" % branch_id)

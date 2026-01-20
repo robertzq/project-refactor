@@ -1,0 +1,13 @@
+id,title,desc,trigger,type,options,effect_a,effect_b
+RND_DORM_NOISE,室友的机械键盘,深夜12点。室友打游戏的青轴键盘声像钉子一样敲进你的脑子。你的 Thread (思绪) 被强制中断。,dorm_enter,GEN,戴上耳塞(忍受)|出言制止(冲突),stress:10:GEN,stress:5;pride:1;relation_roommate:-5:EGO
+RND_NET_LAG,断网危机,你是要提交作业/推流的关键时刻，校园网断了。加载圈转啊转，像极了你迷茫的人生。,lab_enter,STATUS,手机热点(烧钱)|在那干等,money:-50;stress:-5:GEN,stress:15:GEN
+RND_STEAM_SALE,G胖的微笑,Steam 夏季大促。那些你愿望单里的3A大作都在打折。你的理智告诉你没空玩，但你的手很诚实。,dorm_enter,MONEY,买买买|忍住不买,money:-300;sanity:10;sed:-2:GEN,willpower:1;stress:10:GEN
+RND_CODE_BUG,幽灵Bug,代码跑不通，报错信息毫无逻辑。你排查了三个小时，发现是一个全角分号。你觉得自己像个笑话。,lab_enter,WORK,砸键盘|去阳台抽根烟,stress:20;sanity:-5:WORK,stress:-5;time:-1:GEN
+RND_CANTEEN_POISON,黑暗料理,食堂阿姨的手抖了抖，给你打了一份没熟的豆角。你的消化系统抛出了异常。,cafe_enter,STATUS,去医务室|硬扛,money:-100;sanity:5:GEN,stress:20;health:-10:GEN
+RND_LIB_COUPLE,情侣暴击,你去图书馆想刷题，对面坐了一对情侣。他们不看书，他们在互喂零食。你的视线无法聚焦。,lib_enter,EGO,换个座位|盯着他们看,stress:5;sed:-1:GEN,pride:2;stress:10:EGO
+RND_PHONE_DROP,碎屏惨案,下楼拿外卖时手滑了。手机屏幕碎成了蜘蛛网。那是你半个月的生活费。,dorm_enter,MONEY,换原装屏|凑合着用,money:-800;stress:-10:GEN,pride:-2;stress:10:GEN
+RND_ENV_CONFIG,环境配置地狱,你只想写个 "Hello World"，但光是配置环境、装依赖包就花了一整天。这就是程序员的宿命吗？,lab_enter,WORK,继续折腾|重装系统,stress:15;sed:1:WORK,stress:5;sed:0:GEN
+RND_ULA_HATER,黑粉攻击,（网红线）你精心拍的视频下有一条高赞恶评：“这就叫技术？长得丑想得美。”你的心态崩了。,dorm_enter,EGO,怼回去|无视,stress:20;charm:-1:EGO,sed:1;stress:10:GEN
+RND_ULA_VIRAL,算法的馈赠,（网红线）你随手发的一条吐槽突然火了。手机震动不停，虚荣心像泡沫一样膨胀。,dorm_enter,GEN,趁热打铁|保持冷静,charm:5;sed:-2:GEN,sed:1;charm:1:GEN
+RND_GP_HELP,学妹的求助,隔壁班学妹问你能不能帮忙重装系统。你知道这没有任何技术含量，但她叫你学长。,dorm_enter,GEN,去帮忙|借口没空,charm:2;time:-2:GEN,sed:1:GEN
+RND_OLD_PC_LAG,风扇的轰鸣,你的旧电脑打开 IDE 需要 5 分钟。风扇的声音像直升机起飞。你看着 Loading 条发呆。,lab_enter,STATUS,清理灰尘|无奈叹气,stress:5:GEN,stress:10;sanity:-2:GEN

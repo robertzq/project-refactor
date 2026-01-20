@@ -6,7 +6,7 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_eaw5c"]
 size = Vector3(2.06357, 2.9143372, 1.9807892)
 
-[node name="Node3D" type="StaticBody3D"]
+[node name="Area3D" type="Area3D"]
 script = ExtResource("1_eaw5c")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]

@@ -9,7 +9,7 @@ extends Control
 }
 
 # 用于存储显示的 Label
-var value_labels = {} 
+var value_labels = {}
 
 @onready var desc_label = $HBoxTop/VBox/RichTextLabel # 请确保这个路径是对的
 @onready var remain_points_label = $HBoxTop/VBox/RemainPointsLabel
@@ -23,10 +23,49 @@ const MAX_POINTS = 20
 
 # --- 状态记录 ---
 var last_voice_time = -10.0 # 初始设为负数，保证第一次操作必定触发语音
-var voice_cooldown = 1.5 
+var voice_cooldown = 1.5
 var last_zones = {"security": -1, "entropy": -1, "pride": -1, "sensitivity": -1}
-var current_voice_id = "" 
+var current_voice_id = ""
+# 这里只负责 UI 显示 (滑块位置)，真实的逻辑在 Global.init_character 里
+var archetype_data = {
+	0: {
+		"name": "请选择出身...",
+		"code": "",
+		"stats": {}
+	},
+	1: {
+		"name": "都会精英 (The Elite)",
+		"code": "ARCH_ELITE",
+		"desc": "城市高知家庭，资源富足，视野开阔。",
+		"stats": {"security": 8, "pride": 6, "sensitivity": 5, "entropy": 5}
+	},
+	2: {
+		"name": "城市土著 (The Local)",
+		"code": "ARCH_LOCAL",
+		"desc": "本地普通家庭，饿不死也吃不饱，拥有本地人脉。",
+		"stats": {"security": 5, "pride": 4, "sensitivity": 4, "entropy": 4}
+	},
+	3: {
+		"name": "霓虹暗面 (The Survivor)",
+		"code": "ARCH_SURVIVOR",
+		"desc": "离异或低保家庭。极度敏感，但有着野草般的韧性。",
+		"stats": {"security": 1, "pride": 8, "sensitivity": 9, "entropy": 3}
+	},
+	4: {
+		"name": "县城显贵 (The Star)",
+		"code": "ARCH_COUNTY_STAR",
+		"desc": "小地方的天之骄子，自信爆棚，但信息闭塞。",
+		"stats": {"security": 7, "pride": 9, "sensitivity": 6, "entropy": 2}
+	},
+	5: {
+		"name": "错位过客 (The Striver)",
+		"code": "ARCH_STRIVER",
+		"desc": "【推荐主角】高分低就的做题家。心气高，但对未来一无所知。",
+		"stats": {"security": 3, "pride": 7, "sensitivity": 8, "entropy": 1}
+	}
+}
 
+var current_archetype_code = "" # 记录当前选了谁
 func _ready():
 	print("--- 场景初始化开始 ---")
 	
@@ -40,21 +79,21 @@ func _ready():
 	# 获取主要容器
 	var hbox_top = $HBoxTop
 	var left_panel = $HBoxTop/LeftPanel
-	var right_panel = $HBoxTop/VBox 
+	var right_panel = $HBoxTop/VBox
 	
 	if hbox_top and left_panel and right_panel:
 		hbox_top.set_anchors_preset(Control.PRESET_FULL_RECT)
 		
 		# --- 左右分屏 ---
 		left_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		left_panel.size_flags_stretch_ratio = 1.0 
+		left_panel.size_flags_stretch_ratio = 1.0
 		
 		right_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		right_panel.size_flags_stretch_ratio = 1.0
 		right_panel.add_theme_constant_override("separation", 30)
 		
 		# [关键] 防止左侧面板被挤压为0
-		left_panel.custom_minimum_size.x = 400 
+		left_panel.custom_minimum_size.x = 400
 		right_panel.custom_minimum_size.x = 400
 
 		# --- [核心修复] 解决字竖着排的问题 ---
@@ -62,9 +101,9 @@ func _ready():
 			# 1. 开启智能换行
 			comment_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			# 2. 撑满横向空间
-			comment_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL 
+			comment_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			# 3. [这一行救命] 给它一个最小宽度，防止被挤成一条线
-			comment_label.custom_minimum_size.x = 300 
+			comment_label.custom_minimum_size.x = 300
 			# 4. 居中对齐 (可选，看你喜好)
 			comment_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
@@ -72,12 +111,12 @@ func _ready():
 	# 🔧 下拉框专项整形
 	# ============================================================
 	
-	origin_option.add_theme_font_size_override("font_size", 32) 
+	origin_option.add_theme_font_size_override("font_size", 32)
 	var popup = origin_option.get_popup()
 	popup.add_theme_font_size_override("font_size", 32)
 	
-	origin_option.size_flags_vertical = Control.SIZE_SHRINK_CENTER 
-	origin_option.custom_minimum_size.y = 80 
+	origin_option.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	origin_option.custom_minimum_size.y = 80
 
 	# ============================================================
 	# 🎚️ 滑块整形
@@ -86,7 +125,7 @@ func _ready():
 		var s = sliders[key]
 		if s:
 			s.size_flags_vertical = Control.SIZE_EXPAND_FILL
-			s.custom_minimum_size.y = 50 
+			s.custom_minimum_size.y = 50
 	
 	# ============================================================
 	# ⚙️ 逻辑初始化
@@ -102,7 +141,7 @@ func _ready():
 				if child is Label and child != s:
 					lbl = child
 					break
-		if lbl: 
+		if lbl:
 			value_labels[key] = lbl
 			lbl.add_theme_font_size_override("font_size", 32)
 
@@ -110,11 +149,9 @@ func _ready():
 	# 下拉菜单内容
 	origin_option.clear()
 	origin_option.add_item("--- 选择出身 (Archetype) ---", 0)
-	var idx = 1
-	var origins = ["小镇做题家", "落魄书香", "野蛮生长", "温室花朵"]
-	for origin_name in origins:
-		origin_option.add_item(origin_name, idx)
-		idx += 1
+	
+	for i in range(archetype_data.size()):
+		origin_option.add_item(archetype_data[i]["name"], i)
 	origin_option.item_selected.connect(_on_origin_selected)
 
 	# 连接滑块信号
@@ -207,8 +244,8 @@ func get_commentary(type: String, val: float) -> Dictionary:
 	var v = int(val)
 	# 默认返回值，防止漏网之鱼
 	var result = {
-		"en": "Interesting choice...", 
-		"cn": "有趣的选择……", 
+		"en": "Interesting choice...",
+		"cn": "有趣的选择……",
 		"audio": "res://_Assets/Audio/intreseChoice.mp3"
 	}
 	
@@ -242,54 +279,55 @@ func get_commentary(type: String, val: float) -> Dictionary:
 
 # --- 职业选择 ---
 func _on_origin_selected(index):
-	if index == 0: return
-	var origin_name = origin_option.get_item_text(index)
-	# 选职业时，只播放一句总结性的悲剧，不触发滑块语音，防止吵闹
-	speak_truth("Ah, " + origin_name + ". A classic tragedy.", "啊，" + origin_name + "。一出经典的悲剧。")
-	playTTS("res://_Assets/Audio/ahTragedy.mp3")
-	# 设置数值 (这里不会触发 value_changed 信号)
-	match origin_name:
-		"小镇做题家":
-			sliders["security"].value = 2
-			sliders["pride"].value = 6
-			sliders["sensitivity"].value = 8 
-			sliders["entropy"].value = 3
-		"落魄书香":
-			sliders["security"].value = 4
-			sliders["pride"].value = 9
-			sliders["sensitivity"].value = 9
-			sliders["entropy"].value = 7
-		"野蛮生长":
-			sliders["security"].value = 3
-			sliders["pride"].value = 1
-			sliders["sensitivity"].value = 2
-			sliders["entropy"].value = 5
-		"温室花朵":
-			sliders["security"].value = 9
-			sliders["pride"].value = 5
-			sliders["sensitivity"].value = 5
-			sliders["entropy"].value = 4
+	if index == 0:
+		current_archetype_code = ""
+		return
+		
+	var data = archetype_data[index]
+	var origin_name = data["name"]
+	current_archetype_code = data["code"] # 记下来，开始游戏时要用
 	
-	# 手动刷新 UI 数值显示
+	# 播放语音 (保持你原有的逻辑)
+	# 如果名字太长，语音播报可能只需要简称，这里简单处理
+	speak_truth("Ah, " + origin_name, "命运选择了：" + origin_name)
+	playTTS("res://_Assets/Audio/ahTragedy.mp3")
+	
+	# 设置滑块 (Visual Only)
+	var stats = data["stats"]
+	if sliders.has("security"): sliders["security"].value = stats.get("security", 5)
+	if sliders.has("pride"): sliders["pride"].value = stats.get("pride", 5)
+	if sliders.has("sensitivity"): sliders["sensitivity"].value = stats.get("sensitivity", 5)
+	if sliders.has("entropy"): sliders["entropy"].value = stats.get("entropy", 5)
+	
+	# 手动刷新 UI 文字
 	update_ui()
 
 func _on_start_button_pressed():
+	# 1. 贪婪检查 (保持不变)
 	var total = 0
 	for key in sliders: total += sliders[key].value
 	if total > MAX_POINTS:
-		speak_truth("Greedy soul. Too much.", "贪婪的灵魂。你索取得太多了。")
 		playTTS("res://_Assets/Audio/greedySoul.mp3")
-		var tween = create_tween()
-		tween.tween_property(remain_points_label, "position:x", remain_points_label.position.x + 10, 0.05).set_trans(Tween.TRANS_SINE)
-		tween.tween_property(remain_points_label, "position:x", remain_points_label.position.x - 10, 0.05).set_trans(Tween.TRANS_SINE)
-		tween.tween_property(remain_points_label, "position:x", remain_points_label.position.x, 0.05)
 		return
 
+	print(">>> 灵魂注入开始...")
+
+	# 2. 第一步：先应用职业模板 (获取 Money, Traits, Base_Exec 等隐藏属性)
+	if current_archetype_code != "":
+		Global.init_character(current_archetype_code)
+	else:
+		# 如果是纯自定义 (无职业)，我们需要手动初始化那些隐藏属性
+		# 或者给一个 "自定义" 的默认 Code
+		Global.init_character("ARCH_CUSTOM") # 建议在 Global 里加个默认分支
+	
+	# 3. 第二步：用滑块的最终值覆盖 (因为玩家可能在选了职业后微调了滑块)
 	Global.fin_security = sliders["security"].value
 	Global.pride = sliders["pride"].value
 	Global.entropy = sliders["entropy"].value
-	Global.sensitivity = 0.8 + (sliders["sensitivity"].value * 0.07) 
-	
+	# 注意：Sensitivity 的公式要统一
+	# 建议直接存 0-10 的值，或者保持你现在的公式
+	Global.sensitivity = 0.8 + (sliders["sensitivity"].value * 0.07)
+
 	print(">>> 灵魂注入完成。")
 	get_tree().change_scene_to_file("res://_Scenes/TrainScene.tscn")
 	
