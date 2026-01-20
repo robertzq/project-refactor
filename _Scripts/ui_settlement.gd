@@ -1,12 +1,37 @@
 extends Control
 
 @onready var story_text = $Panel/StoryText
+# 假设你的按钮节点叫 NextBtn，如果叫其他名字请自行修改，例如 $Panel/Button
+@onready var next_btn = $Panel/NextBtn 
+
+# 1. 新增变量：用于暂存外部传来的文本 (用于结局模式)
+var custom_report_text: String = "" 
 
 func _ready():
-	generate_diary()
-	# 暂停游戏
+	# 2. 核心判断：如果有外部文案，就是结局；否则就是半月结算
+	if custom_report_text != "":
+		show_custom_report()
+	else:
+		generate_diary()
+	
+	# 暂停游戏，防止玩家在看报告时时间流逝或乱动
 	get_tree().paused = true
 
+# --- 新增：外部调用入口 (在 add_child 之前调用) ---
+func setup_as_ending(text: String):
+	custom_report_text = text
+
+# --- 新增：显示自定义报告模式 (结局) ---
+func show_custom_report():
+	story_text.text = custom_report_text
+	
+	# 如果是结局，把按钮文字改一下
+	if next_btn:
+		next_btn.text = "结束旅程" 
+		# 如果你想在结局时彻底断开原来的信号连接新的，也可以在这里写，
+		# 但简单的做法是在 _on_next_btn_pressed 里做判断。
+
+# --- 原有的半月日记生成逻辑 (保持不变) ---
 func generate_diary():
 	var total_stress = 0.0
 	var total_progress = 0.0
@@ -29,7 +54,13 @@ func generate_diary():
 	
 	# --- A. 开头：回顾经历了什么 ---
 	text += "[color=#aaaaaa]这段时间，我经历了很多事……[/color]\n"
-	text += "比如" + events_experienced.pick_random() + "，还有" + events_experienced.pick_random() + "。\n\n"
+	if events_experienced.size() > 0:
+		text += "比如" + events_experienced.pick_random()
+		if events_experienced.size() > 1:
+			text += "，还有" + events_experienced.pick_random()
+		text += "。\n\n"
+	else:
+		text += "日子平平淡淡，没有什么特别值得记录的。\n\n"
 	
 	# --- B. 焦虑描写 (Stress) ---
 	if total_stress > 50:
@@ -39,8 +70,7 @@ func generate_diary():
 	else:
 		text += "这段日子过得还算平稳，没有太大的风浪。\n"
 		
-	# --- C. 沉淀描写 (Sedimentation) - 核心心态变化 ---
-	# 这里体现“沉淀”如何抵消“焦虑”
+	# --- C. 沉淀描写 (Sedimentation) ---
 	if total_sed > 0:
 		text += "\n[color=#88ffff]但也有一种奇妙的变化正在发生。[/color]\n"
 		text += "在那些死磕难关的深夜里，我感到内心某种浮躁的东西沉淀下来了。\n"
@@ -66,9 +96,16 @@ func generate_diary():
 	
 	story_text.text = text
 
+# --- 按钮回调 ---
 func _on_next_btn_pressed():
-	# 清空日志，准备下一轮
-	Global.clear_journal()
-	# 恢复游戏
-	get_tree().paused = false
-	queue_free() # 关闭窗口
+	# 1. 如果是结局模式，点击按钮退出游戏或回主菜单
+	if custom_report_text != "":
+		print(">>> 游戏结束，退出游戏")
+		get_tree().quit() 
+		# 或者: get_tree().change_scene_to_file("res://_Scenes/MainMenu.tscn")
+	
+	# 2. 如果是半月结算模式，继续游戏
+	else:
+		Global.clear_journal() # 清空旧日志
+		get_tree().paused = false # 恢复时间流逝
+		queue_free() # 关闭弹窗

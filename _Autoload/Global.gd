@@ -139,115 +139,150 @@ func get_max_anxiety_limit() -> float:
 	return 80.0 * base_exec
 
 # [3.3] 获取当前工作效率 (Efficiency)
+# 决定项目推进的快慢：Eff = Base * SeatBuff * Curses
 func get_efficiency() -> Dictionary:
 	var final_eff = base_exec
-	var curse = "无"
+	var active_factors = [] # 用于记录生效的 Buff/Curse 名称
 	
-	# --- 新增：应用图书馆座位 Buff ---
+	# --- A. 图书馆座位 Buff (乘区) ---
 	if not current_study_buff.is_empty() and current_study_buff.has("eff_mod"):
 		var seat_mod = current_study_buff["eff_mod"]
 		final_eff *= seat_mod
-		# 只有当加成显著时才记录，避免日志太乱
 		if seat_mod != 1.0:
-			print("   >> [Buff] 座位加成: x%.2f" % seat_mod)
-	# -------------------------------
-	# 简单的诅咒判定示例
+			active_factors.append("座位(x%.2f)" % seat_mod)
+
+	# --- B. 诅咒与状态修正 ---
+	var boldness = get_boldness()
+	
+	# 1. [安逸诅咒] (Comfort Curse)
+	# 富人太舒服了不想动 (家境好且无压力)
 	if fin_security > 7 and current_anxiety < 30:
 		final_eff *= 0.7
-		curse = "安逸诅咒"
-	elif get_boldness() < 4.0:
-		final_eff *= 0.8
-		curse = "胆怯诅咒"
+		active_factors.append("安逸诅咒")
 		
-	return {"value": final_eff, "curse": curse}
+	# 2. [胆怯诅咒] (Cowardice Curse)
+	# 吓破胆了缩手缩脚 (胆量过低)
+	elif boldness < 4.0:
+		final_eff *= 0.8
+		active_factors.append("胆怯诅咒")
+	
+	# 3. [惊慌卷王] (Panic Striver) - 策划案 v3.2 新增
+	# 拥有【背水一战】特质，且处于高压状态时，效率反而爆发
+	if current_anxiety > 80 and "背水一战" in traits:
+		final_eff *= 1.2
+		active_factors.append("背水一战")
 
-# [3.4] 压力结算核心公式
-# base_val: 基础数值
+	return {
+		"value": final_eff, 
+		"desc": ", ".join(active_factors) if active_factors.size() > 0 else "正常"
+	}
+
+# [3.4] 压力结算核心公式 (Anxiety Logic)
+# base_val: 基础数值 (通常为 10, 25, 45, 70)
 # type: 类型 (MONEY, EGO, GEN, STUDY, WORK)
-# is_working: 是否处于兼职/工作状态 (影响避难所判定)
 func apply_stress(base_val: float, type: String, is_working: bool = false) -> Dictionary:
 	
-	# --- A. 回血逻辑 (负数) ---
+	# --- A. 回血逻辑 (数值 < 0) ---
+	# (保持原有逻辑不变，此处省略，直接使用你现有的代码即可)
 	if base_val < 0:
-		# 可以在这里加入 recovery_strategy 的判断逻辑
-		# 比如: 如果是 Extrovert 且 type=="SOCIAL"，回血加倍
-		var heal_amount = base_val
-		
-		# 简单示例: 高敏感的人回血也快
-		heal_amount *= sensitivity
-		
+		var heal_amount = base_val * sensitivity # 高敏回血也快
 		current_anxiety += heal_amount
-		if current_anxiety < 0:
-			current_anxiety = 0
-			
-		print(">> [Global] 治愈: %.1f | 当前焦虑: %.1f" % [heal_amount, current_anxiety])
+		if current_anxiety < 0: current_anxiety = 0
+		print(">> [Global] 治愈: %.1f" % heal_amount)
 		return {"damage": heal_amount, "current_anxiety": current_anxiety}
 
-	# --- B. 扣血逻辑 (正数) ---
+	# --- B. 扣血逻辑 (数值 > 0) ---
 	
-	# Step 1: 计算原始压力 (Omega)
-	var omega = base_val
-	var log_reason = ""
+	# Step 0: 计算修正后的基础值 (Modified Base)
+	# 关键修复：座位带来的压力(如角落位+5)应视为基础值的一部分
+	var modified_base = base_val
+	var log_prefix = ""
 	
-	# --- 新增：应用座位带来的额外压力 (固定值) ---
 	if not current_study_buff.is_empty() and current_study_buff.has("stress_fix"):
-		var fix_val = current_study_buff["stress_fix"]
-		if fix_val != 0:
-			omega += fix_val
-			log_reason += "[座位%+d]" % fix_val
-	# ----------------------------------------
+		var seat_fix = current_study_buff["stress_fix"]
+		modified_base += seat_fix
+		if seat_fix != 0:
+			log_prefix = "[座位%+d] " % seat_fix
+			
+	# Step 1: 根据类型应用公式 (Omega Calculation)
+	var omega = 0.0
+	var log_reason = "通用"
 	
 	match type:
 		"MONEY":
-			# 没钱时伤害巨高：基础值 - (家境 * 2.0)
-			# 例如：家境2，减免4；家境8，减免16
-			omega = base_val - (fin_security * 2.0)
-			log_reason = "家境修正"
+			# 公式: Base - (家境 * 2.0)
+			# 穷人重伤，富人无视
+			omega = modified_base - (fin_security * 2.0)
+			log_reason = "金钱事件"
 			
 		"EGO":
-			# 自尊越高伤害越高：基础值 + (自尊 * 0.5)
-			omega = base_val + (pride * 0.5)
-			log_reason = "自尊修正"
+			# 公式: Base + (自尊 * 0.5)
+			# 自尊越高，面子受损越痛
+			omega = modified_base + (pride * 0.5)
+			log_reason = "自尊事件"
 		
 		"WORK", "STUDY":
-			# 熵越高(迷茫)，做同样的事越累
-			# 公式: 基础值 * (0.8 + 熵 * 0.05)
-			# 例: 熵5 -> 1.05倍; 熵10 -> 1.3倍; 熵0 -> 0.8倍
+			# 公式: Base * (0.8 + 熵 * 0.05)
+			# 熵越高(想太多/眼高手低)，做同样的事越累
+			# 熵5(正常) -> x1.05
+			# 熵1(做题家) -> x0.85 (心无旁骛)
 			var entropy_mult = 0.8 + (entropy * 0.05)
-			omega = base_val * entropy_mult
-			log_reason = "认知修正(熵%d)" % entropy
-				
+			omega = modified_base * entropy_mult
+			log_reason = "认知修正(x%.2f)" % entropy_mult
+			
 		_:
-			omega = base_val
-			log_reason = "通用"
+			omega = modified_base
 
-	# Step 2: 避难所修正 (穷人打工保护机制)
-	if is_employed and fin_security < 3:
-		omega -= 8.0
-		log_reason += "+避难所"
+	# Step 2: 避难所修正 (Refuge Bonus)
+	# 策划案 v3.2: 修正值由 5 提升至 8
+	if is_working and fin_security < 3:
+		omega -= 8.0 
+		log_reason += "+打工避难"
 	
-	if omega < 0: omega = 0 # 伤害不能为负
+	if omega < 0: omega = 0 # 伤害底限
 
-	# Step 3: 全局敏感度放大
+	# Step 3: 全局敏感度放大 (Sensitivity)
 	var final_damage = omega * sensitivity
 	
 	# 应用结果
 	current_anxiety += final_damage
-	if current_anxiety >= get_max_anxiety_limit():
+	var is_broken = current_anxiety >= get_max_anxiety_limit()
+	
+	if is_broken:
 		trigger_breakdown()
-	# 打印战斗日志
+
+	# 打印详细战斗日志 (Debug)
 	print("---------------------------------------")
 	print("   [Global] 压力结算 (%s)" % type)
-	print("   公式: (基础%.0f -> 修正%.1f [%s]) x 敏感%.1f = 最终%.1f" % [base_val, omega, log_reason, sensitivity, final_damage])
+	print("   基础: %.0f %s-> 修正后基础: %.0f" % [base_val, log_prefix, modified_base])
+	print("   公式: %.0f [%s] x 敏感(%.1f) = 最终伤害 %.1f" % [omega, log_reason, sensitivity, final_damage])
 	print("   当前焦虑: %.1f / %.1f" % [current_anxiety, get_max_anxiety_limit()])
 	print("---------------------------------------")
 
 	return {
 		"damage": final_damage,
 		"current_anxiety": current_anxiety,
-		"is_breakdown": current_anxiety >= get_max_anxiety_limit()
+		"is_breakdown": is_broken
 	}
 
+# [3.5] 辅助：检查是否分心
+# 返回 true 表示分心了，false 表示专注
+func check_is_distracted() -> bool:
+	var final_chance = 0.05 # 基础分心率 5%
+	
+	# 叠加座位的分心风险 (例如靠窗位 +25% -> 0.30)
+	if not current_study_buff.is_empty():
+		final_chance += current_study_buff.get("distraction_chance", 0.0)
+	
+	# 进行判定
+	var roll = randf()
+	var is_distracted = roll < final_chance
+	
+	if is_distracted:
+		print(">> [Global] 哎呀！分心了！(Roll: %.2f < 阈值: %.2f)" % [roll, final_chance])
+	
+	return is_distracted
+	
 func trigger_breakdown():
 	print(">>> ⚠️ 玩家崩溃！ <<<")
 	# 1. 强制清空当前项目进度 (作为惩罚)
@@ -489,21 +524,6 @@ func show_settlement():
 	get_tree().root.add_child(settlement)
 	settlement.setup_report() # 生成报告
 
-# --- 辅助：检查是否分心 ---
-# 返回 true 表示分心了，false 表示专注
-func check_is_distracted() -> bool:
-	var base_chance = 0.05 # 基础分心率 5%
-	
-	# 叠加座位的分心风险
-	if not current_study_buff.is_empty():
-		base_chance += current_study_buff.get("distraction_chance", 0.0)
-	
-	# 进行判定
-	if randf() < base_chance:
-		print(">> [Global] 哎呀！分心了！(概率: %.0f%%)" % (base_chance * 100))
-		return true
-	
-	return false
 
 # --- 辅助：清理 Buff (重要！) ---
 # 每次离开图书馆或结算完成后必须调用
