@@ -97,6 +97,18 @@ func create_node_button(data: Dictionary) -> Button:
 			btn.text = data["name"] + "\n[已锁死]"
 			btn.disabled = true
 			btn.modulate = Color(0.8, 0.2, 0.2, 0.5) # 红色半透明
+			# 🔥 智能提示：为什么锁住了？
+			var reason = ""
+			if data.has("mutex_group") and data["mutex_group"] in Global.active_mutex_groups:
+				reason = "路径互斥"
+			elif Global.sedimentation < data.get("req_sed", 0):
+				reason = "沉淀不足 (%d/%d)" % [Global.sedimentation, data["req_sed"]]
+			elif Global.pride < data.get("req_pride", 0):
+				reason = "心性不符 (需自尊%d)" % data["req_pride"]
+			else:
+				reason = "前置未完成"
+				
+			btn.text = "%s\n🔒 [%s]" % [data["name"], reason]
 			
 		Global.PathStatus.AVAILABLE:
 			btn.text = "【" + data["name"] + "】\n" + data.get("desc", "")

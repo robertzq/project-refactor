@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://dha1usibb8h0"]
+
+[ext_resource type="Texture2D" uid="uid://btje2ub6krml1" path="res://_Assets/canteenbg.png" id="1_qo8d5"]
+[ext_resource type="Script" uid="uid://xi0541nly2gb" path="res://_Scripts/canteen_indoor.gd" id="1_vcojg"]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_vcojg")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+offset_right = 7019.0
+offset_bottom = 4125.0
+texture = ExtResource("1_qo8d5")
