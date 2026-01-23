@@ -11,3 +11,6 @@ RND_ULA_HATER,黑粉攻击,（网红线）你精心拍的视频下有一条高�
 RND_ULA_VIRAL,算法的馈赠,（网红线）你随手发的一条吐槽突然火了。手机震动不停，虚荣心像泡沫一样膨胀。,dorm_enter,GEN,趁热打铁|保持冷静,charm:5;sed:-2:GEN,sed:1;charm:1:GEN
 RND_GP_HELP,学妹的求助,隔壁班学妹问你能不能帮忙重装系统。你知道这没有任何技术含量，但她叫你学长。,dorm_enter,GEN,去帮忙|借口没空,charm:2;time:-2:GEN,sed:1:GEN
 RND_OLD_PC_LAG,风扇的轰鸣,你的旧电脑打开 IDE 需要 5 分钟。风扇的声音像直升机起飞。你看着 Loading 条发呆。,lab_enter,STATUS,清理灰尘|无奈叹气,stress:5:GEN,stress:10;sanity:-2:GEN
+RND_NAKED_ROUTER,裸奔的信仰,去隔壁大神寝室串门，看到床头挂着一块绿色的裸露PCB。他淡定地说：“这是路由器，刷了OpenWRT，裸奔散热好。”,dorm_enter,GEN,大受震撼|担心触电,sed:5;entropy:2:WORK,pride:2;sed:0:GEN
+RND_LITECOIN_DIG,显卡的哀嚎,比特币太贵了，室友拉你挖莱特币(LTC)。你的笔记本烫得能煎蛋，风扇在尖叫。你在想这能不能换顿饭钱。,dorm_enter,MONEY,跟风挖矿|怕烧坏电脑,money:10;stress:10;trait:币圈遗民:GEN,sanity:2;stress:-5:GEN
+RND_GIRLS_DORM,宿管的凝视,被邀请去女生寝室修路由器。进门时宿管阿姨上下打量你，眼神像防贼：“到底修不修得好啊？别磨蹭。”,dorm_enter,EGO,必须修好|紧张手抖,charm:10;pride:5;stress:10:GEN,stress:20;pride:-5;charm:-5:EGO

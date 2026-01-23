@@ -18,6 +18,11 @@ extends CanvasLayer
 
 var current_event: Dictionary = {}
 
+# 星期数字转中文的映射表
+const DAY_MAP = {
+	1: "一", 2: "二", 3: "三", 4: "四", 5: "五", 6: "六", 7: "日"
+}
+
 func _ready():
 	panel_root.visible = false
 	# 初始隐藏，防止挡住视线
@@ -25,6 +30,24 @@ func _ready():
 	if status_lbl:
 		status_lbl.hide()
 		status_lbl.modulate.a = 0 # 透明度设为0
+	
+	if Global.time_sys:
+		Global.time_sys.time_updated.connect(_on_time_updated)
+		
+		# 2. 初始化显示 (防止刚运行显示默认文本)
+		_update_time_ui(Global.time_sys.current_week, Global.time_sys.current_day)
+
+
+# 信号回调函数
+func _on_time_updated(week, day, slots):
+	_update_time_ui(week, day)
+
+# 执行 UI 刷新
+func _update_time_ui(week, day):
+	var day_str = DAY_MAP.get(day, str(day)) # 如果找不到 key 就直接显示数字
+
+	# 设置文本格式，例如：第 1 周 | 星期一
+	time_label.text = "第 %d 周 | 星期%s" % [week, day_str]
 
 func _process(_delta):
 	# 实时刷新 HUD

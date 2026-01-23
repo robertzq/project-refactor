@@ -35,6 +35,10 @@ func _physics_process(delta):
 		input_dir.x = -1
 	elif Input.is_action_pressed("ui_right"):
 		input_dir.x = 1
+	elif Input.is_action_pressed("saveGame"):
+		Global.save_game()
+	elif Input.is_action_pressed("continueGame"):
+		Global.load_game()
 	
 	# 2. 如果有输入
 	if input_dir != Vector3.ZERO:

@@ -64,6 +64,9 @@ func _ready():
 	
 	# 连接子系统信号
 	time_sys.period_ended.connect(_on_biweekly_settlement)
+
+	time_sys.initialize()
+
 	time_sys.time_updated.connect(func(w, _d, _s): emit_signal("time_advanced", w))
 	
 	print("✅ Global Refactored.")
@@ -298,3 +301,114 @@ func _on_biweekly_settlement():
 func show_settlement():
 	var ui = load("res://_Scenes/UI_Settlement.tscn").instantiate()
 	get_tree().root.add_child(ui)
+
+# ==============================================================================
+# 6. 存档与读档系统 (Save & Load System)
+# ==============================================================================
+const SAVE_PATH = "user://savegame.json" # Godot 的用户数据目录，跨平台安全
+var current_archetype_key
+var completed_events
+
+func save_game():
+	# 1. 打包数据 (把所有需要持久化的变量都放进去)
+	var save_data = {
+		# --- 基础属性 ---
+		"money": money,
+		"fin_security": fin_security,
+		"pride": pride,
+		"entropy": entropy,
+		"sedimentation": sedimentation,
+		"sensitivity": sensitivity,
+		"base_exec": base_exec,
+		"current_anxiety": current_anxiety,
+		
+		# --- 角色构建 ---
+		"archetype": current_archetype_key, # 记得之前让你加的这个变量
+		"traits": traits,
+		"relations": relations,
+		"recovery_strategy": recovery_strategy,
+		
+		# --- 时间系统 (从 TimeSys 获取) ---
+		"current_week": time_sys.current_week,
+		"current_day": time_sys.current_day,
+		"time_slots": time_sys.time_slots,
+		
+		# --- 进度与剧情 (最重要！) ---
+		"completed_events": completed_events, # 记录哪些事件发生过
+		"project_progress": project_progress,
+		"active_project_id": path_sys.active_project_id
+	}
+
+	# 2. 写入文件
+	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if file:
+		var json_str = JSON.stringify(save_data)
+		file.store_string(json_str)
+		file.close()
+		print("💾 [System] 游戏已保存至: ", SAVE_PATH)
+		emit_signal("vision_improved", entropy, "游戏进度已保存") # 借用这个信号弹个窗提示
+	else:
+		printerr("❌ 保存失败！")
+
+func load_game() -> bool:
+	# 1. 检查文件是否存在
+	if not FileAccess.file_exists(SAVE_PATH):
+		print("⚠️ 没有找到存档文件")
+		return false
+		
+	# 2. 读取文件
+	var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var json_str = file.get_as_text()
+	file.close()
+
+	# 3. 解析 JSON
+	var json = JSON.new()
+	var error = json.parse(json_str)
+	if error != OK:
+		printerr("❌ 存档损坏！")
+		return false
+		
+	var data = json.data
+
+	# 4. 恢复数据 (把字典里的值填回去)
+	# --- 基础属性 ---
+	money = data.get("money", 0)
+	fin_security = data.get("fin_security", 5)
+	pride = data.get("pride", 5)
+	entropy = data.get("entropy", 0)
+	sedimentation = data.get("sedimentation", 0)
+	sensitivity = data.get("sensitivity", 1.0)
+	base_exec = data.get("base_exec", 1.0)
+	current_anxiety = data.get("current_anxiety", 0.0)
+
+	# --- 角色构建 ---
+	current_archetype_key = data.get("archetype", "ARCH_STRIVER")
+	traits = data.get("traits", [])
+	relations = data.get("relations", {})
+	recovery_strategy = data.get("recovery_strategy", "Explorer")
+
+	# --- 进度 ---
+	completed_events = data.get("completed_events", [])
+	project_progress = data.get("project_progress", 0.0)
+
+	# --- 恢复时间 (需要手动设置 TimeSys) ---
+	time_sys.current_week = data.get("current_week", 1)
+	time_sys.current_day = data.get("current_day", 1)
+	time_sys.time_slots = data.get("time_slots", 3)
+
+	# --- 恢复项目 ---
+	var proj_id = data.get("active_project_id", "")
+	if proj_id != "":
+		path_sys.start_project(proj_id) # 重新激活项目逻辑
+		path_sys.project_progress = project_progress # 覆盖进度
+
+	print("📂 [System] 读档成功！")
+
+	# 5. 🔥 关键：读档后刷新当前场景
+	# 建议重新加载一次主场景，确保 UI 和画面跟数值同步
+	get_tree().reload_current_scene()
+
+	return true
+
+func has_save_file() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
